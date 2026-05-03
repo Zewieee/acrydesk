@@ -1,0 +1,17 @@
+$kind: http-request
+name: Update Request
+method: PUT
+url: '{{baseUrl}}/api/requests/{{requestId}}'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "customerName": "John Doe Updated",
+      "productType": "Acrylic Sign",
+      "quantity": 3,
+      "priority": "high"
+    }

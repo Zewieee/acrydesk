@@ -1,0 +1,5 @@
+$kind: http-request
+name: List Staff
+method: GET
+url: '{{baseUrl}}/api/users/staff'
+order: 1000

@@ -1,0 +1,17 @@
+$kind: http-request
+name: Register Staff
+method: POST
+url: '{{baseUrl}}/api/auth/register-staff'
+order: 5000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "Staff Member",
+      "email": "staff@example.com",
+      "password": "staffpass123",
+      "role": "sales"
+    }

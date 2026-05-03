@@ -1,0 +1,5 @@
+$kind: http-request
+name: Send Quotation
+method: PATCH
+url: '{{baseUrl}}/api/quotations/{{quotationId}}/send'
+order: 5000

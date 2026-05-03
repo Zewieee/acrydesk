@@ -1,0 +1,14 @@
+$kind: http-request
+name: Update Staff Status
+method: PUT
+url: '{{baseUrl}}/api/users/{{staffId}}/status'
+order: 2000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "status": "active"
+    }

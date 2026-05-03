@@ -1,0 +1,19 @@
+$kind: collection
+name: AcryDesk API
+description: API collection for AcryDesk - an acrylic desk/product quoting and request management platform.
+auth:
+  type: bearer
+  credentials:
+    - key: token
+      value: '{{token}}'
+variables:
+  - key: baseUrl
+    value: 'http://localhost:3000'
+  - key: token
+    value: ''
+  - key: requestId
+    value: ''
+  - key: quotationId
+    value: ''
+  - key: staffId
+    value: ''

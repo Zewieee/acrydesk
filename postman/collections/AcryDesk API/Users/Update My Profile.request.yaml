@@ -1,0 +1,15 @@
+$kind: http-request
+name: Update My Profile
+method: PUT
+url: '{{baseUrl}}/api/users/me'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "name": "John Doe Updated",
+      "phone": "0909876543"
+    }

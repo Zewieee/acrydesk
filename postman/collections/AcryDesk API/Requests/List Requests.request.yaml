@@ -1,0 +1,20 @@
+$kind: http-request
+name: List Requests
+method: GET
+url: '{{baseUrl}}/api/requests'
+order: 1000
+queryParams:
+  - key: status
+    value: ''
+    description: Filter by status (optional)
+    disabled: true
+  - key: search
+    value: ''
+    description: Search keyword (optional)
+    disabled: true
+  - key: page
+    value: '1'
+    description: Page number (default 1)
+  - key: limit
+    value: '10'
+    description: Items per page (default 10)

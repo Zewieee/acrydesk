@@ -1,0 +1,30 @@
+$kind: http-request
+name: Create Request
+method: POST
+url: '{{baseUrl}}/api/requests'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "customerName": "John Doe",
+      "customerPhone": "0901234567",
+      "customerEmail": "john@example.com",
+      "productType": "Acrylic Sign",
+      "description": "Custom acrylic sign for office lobby",
+      "dimensions": "100x50cm",
+      "material": "Acrylic 5mm",
+      "quantity": 2,
+      "expectedDate": "2026-04-30",
+      "priority": "medium"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      if (pm.response.code === 201) {
+        pm.collectionVariables.set("requestId", pm.response.json()._id);
+      }

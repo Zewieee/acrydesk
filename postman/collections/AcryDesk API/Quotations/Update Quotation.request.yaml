@@ -1,0 +1,23 @@
+$kind: http-request
+name: Update Quotation
+method: PUT
+url: '{{baseUrl}}/api/quotations/{{quotationId}}'
+order: 4000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "items": [
+        {
+          "productName": "Acrylic Sign 100x50cm",
+          "quantity": 2,
+          "unitPrice": 550000
+        }
+      ],
+      "tax": 10,
+      "discount": 50000,
+      "notes": "Updated pricing"
+    }

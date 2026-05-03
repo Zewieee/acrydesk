@@ -1,0 +1,14 @@
+$kind: http-request
+name: List Quotations
+method: GET
+url: '{{baseUrl}}/api/quotations'
+order: 1000
+queryParams:
+  - key: requestId
+    value: ''
+    description: Filter by request ID (optional)
+    disabled: true
+  - key: status
+    value: ''
+    description: Filter by status (optional)
+    disabled: true

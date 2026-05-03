@@ -1,0 +1,5 @@
+$kind: http-request
+name: Delete Quotation
+method: DELETE
+url: '{{baseUrl}}/api/quotations/{{quotationId}}'
+order: 6000

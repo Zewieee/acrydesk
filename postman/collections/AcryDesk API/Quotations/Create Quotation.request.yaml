@@ -1,0 +1,31 @@
+$kind: http-request
+name: Create Quotation
+method: POST
+url: '{{baseUrl}}/api/quotations'
+order: 3000
+headers:
+  - key: Content-Type
+    value: application/json
+body:
+  type: json
+  content: |-
+    {
+      "requestId": "{{requestId}}",
+      "items": [
+        {
+          "productName": "Acrylic Sign 100x50cm",
+          "quantity": 2,
+          "unitPrice": 500000
+        }
+      ],
+      "tax": 10,
+      "discount": 0,
+      "notes": "Standard production time 5-7 business days"
+    }
+scripts:
+  - type: afterResponse
+    language: text/javascript
+    code: |-
+      if (pm.response.code === 201) {
+        pm.collectionVariables.set("quotationId", pm.response.json()._id);
+      }
