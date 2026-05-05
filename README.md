@@ -146,7 +146,7 @@ acrydesk/
 | Engineer | engineer@acrydesk.com | 123456 |
 | Customer | Đăng ký tài khoản mới | — |
 
-> Email nhân viên phải có định dạng `@acrydesk.com`
+> Email phải có định dạng `@acrydesk.com`
 
 ---
 
