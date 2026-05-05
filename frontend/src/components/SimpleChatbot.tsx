@@ -105,11 +105,16 @@ export default function SimpleChatbot() {
                     {msg.type === 'bot' ? <Bot size={16} /> : <User size={16} />}
                   </div>
                   <div className={`p-4 rounded-2xl text-sm leading-relaxed ${
-                    msg.type === 'bot' 
-                      ? 'bg-white text-slate-700 shadow-sm border border-slate-100 rounded-tl-none' 
+                    msg.type === 'bot'
+                      ? 'bg-white text-slate-700 shadow-sm border border-slate-100 rounded-tl-none'
                       : 'bg-blue-600 text-white shadow-md shadow-blue-100 rounded-tr-none'
                   }`}>
-                    {msg.text}
+                    {msg.text.split('\n').map((line, i) => (
+                      <React.Fragment key={i}>
+                        {line}
+                        {i < msg.text.split('\n').length - 1 && <br />}
+                      </React.Fragment>
+                    ))}
                   </div>
                 </div>
 
@@ -150,7 +155,7 @@ export default function SimpleChatbot() {
             <a href="tel:0913213091" className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-blue-600 transition-colors">
               <Phone size={14} className="text-blue-600" /> Gọi ngay
             </a>
-            <a href="mailto:sales@opep.vn" className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-blue-600 transition-colors">
+            <a href="mailto:opepvn1@gmail.com" className="flex items-center gap-2 text-[10px] font-bold text-slate-500 uppercase tracking-widest hover:text-blue-600 transition-colors">
               <Mail size={14} className="text-blue-600" /> Gửi Email
             </a>
           </div>
