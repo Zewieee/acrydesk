@@ -68,7 +68,7 @@ cd backend
 npm install
 ```
 
-Tạo file `backend/.env`:
+Tạo file `backend/.env`: hoặc sử dụng .env của chúng tôi 
 
 ```env
 PORT=3000
@@ -92,7 +92,7 @@ cd frontend
 npm install
 ```
 
-Tạo file `frontend/.env`:
+Tạo file `frontend/.env`: hoặc sử dụng file .env của chúng tôi
 
 ```env
 VITE_API_URL=http://localhost:3000/api
