@@ -1,0 +1,65 @@
+===================================================
+  ACRYDESK - OPEP QUOTATION MANAGEMENT SYSTEM
+  Source Code Links - Sprint 3
+===================================================
+
+GITHUB REPOSITORY
+  https://github.com/segsssss/acrydesk
+
+MAIN BRANCHES
+  main  : https://github.com/segsssss/acrydesk/tree/main
+
+---------------------------------------------------
+FRONTEND SOURCE CODE
+---------------------------------------------------
+Pages:
+  Dashboard (Staff)    : frontend/src/pages/Dashboard.tsx
+  Customer Dashboard   : frontend/src/pages/CustomerDashboard.tsx
+  Home Page            : frontend/src/pages/Home.tsx
+  Catalog              : frontend/src/pages/Catalog.tsx
+
+Components (Sprint 3 - New):
+  Global Search        : frontend/src/components/GlobalSearch.tsx
+  Revenue Report       : frontend/src/components/RevenueReport.tsx
+  AI Chatbot           : frontend/src/components/SimpleChatbot.tsx
+
+API Layer:
+  Axios + Auth         : frontend/src/api/axios.ts
+  RFQ API              : frontend/src/api/rfq.ts
+
+---------------------------------------------------
+BACKEND SOURCE CODE
+---------------------------------------------------
+Controllers:
+  Request/RFQ          : backend/src/controllers/request.controller.ts
+  Notification         : backend/src/controllers/notification.controller.ts
+  Message              : backend/src/controllers/message.controller.ts
+  Auth                 : backend/src/controllers/auth.controller.ts
+
+Models:
+  Notification Model   : backend/src/models/Notification.model.ts
+  Request Model        : backend/src/models/Request.model.ts
+
+---------------------------------------------------
+SPRINT 3 DOCUMENTATION
+---------------------------------------------------
+User Stories:
+  US_RealtimeNotifications : docs/sprint3/US_RealtimeNotifications.md
+  US_GlobalSearch          : docs/sprint3/US_GlobalSearch.md
+  US_RevenueReport         : docs/sprint3/US_RevenueReport.md
+  US_RFQTableEnhancements  : docs/sprint3/US_RFQTableEnhancements.md
+  US_UploadAvatar          : docs/sprint3/US_UploadAvatar.md
+  US_AIChatbot             : docs/sprint3/US_AIChatbot.md
+
+Test Cases (CSV):
+  sprint3_testcases_new.csv : docs/sprint3/sprint3_testcases_new.csv
+
+---------------------------------------------------
+TECH STACK
+---------------------------------------------------
+  Frontend : React 19 + TypeScript + Vite + Tailwind CSS v4
+  Backend  : Node.js + Express 5 + TypeScript
+  Database : MongoDB (Mongoose)
+  Realtime : Socket.IO
+  Auth     : JWT (Access + Refresh Token)
+===================================================

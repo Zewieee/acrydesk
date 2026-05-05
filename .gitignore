@@ -43,6 +43,7 @@ Thumbs.db
 
 # Project specific
 .agent/
+.claude/
 uploads/
 tmp/
 scratch/

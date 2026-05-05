@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { User, Users, FileText, CheckCircle, Save, Lock } from 'lucide-react';
+import { User, Users, FileText, CheckCircle, Save, Lock, Camera, Loader2 } from 'lucide-react';
 import { getStaffAllAPI, updateMyProfileAPI, type Staff } from '../api/user';
 import { registerStaffAPI } from '../api/auth';
+import { uploadFilesAPI } from '../api/upload';
+import { getFileUrl } from '../utils/fileUrl';
 
 interface SettingsViewProps {
   user: any;
@@ -15,7 +17,9 @@ export default function SettingsView({ user, onUserUpdate, openChangePassword }:
   // Tab 1: Profile
   const [profileName, setProfileName] = useState(user?.name || '');
   const [profilePhone, setProfilePhone] = useState(user?.phone || '');
+  const [avatar, setAvatar] = useState(user?.avatar || '');
   const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
 
   // Tab 2: Quote settings (stored in localStorage for simplicity right now)
   const [quoteTax, setQuoteTax] = useState(() => localStorage.getItem('defaultTax') || '8');
@@ -65,13 +69,37 @@ export default function SettingsView({ user, onUserUpdate, openChangePassword }:
 
     setIsSavingProfile(true);
     try {
-      const res = await updateMyProfileAPI({ name: profileName, phone: profilePhone });
+      const res = await updateMyProfileAPI({ name: profileName, phone: profilePhone, avatar });
       onUserUpdate(res.user);
       alert('Cập nhật hồ sơ thành công!');
     } catch(e: any) {
       alert(e.response?.data?.message || 'Lỗi cập nhật');
     } finally {
       setIsSavingProfile(false);
+    }
+  };
+
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    // Check file size (max 2MB)
+    if (file.size > 2 * 1024 * 1024) {
+      alert('Dung lượng ảnh quá lớn! Vui lòng chọn ảnh dưới 2MB.');
+      return;
+    }
+
+    setIsUploading(true);
+    try {
+      const res = await uploadFilesAPI([file]);
+      if (res.urls && res.urls.length > 0) {
+        setAvatar(res.urls[0]);
+      }
+    } catch (error) {
+      console.error('Avatar upload error:', error);
+      alert('Lỗi khi tải ảnh lên');
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -146,7 +174,39 @@ export default function SettingsView({ user, onUserUpdate, openChangePassword }:
                 <p className="text-sm text-slate-500 mt-1">Cập nhật thông tin tài khoản của bạn</p>
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+              <div className="flex flex-col md:flex-row gap-8 pt-4 border-t border-slate-100">
+                {/* Avatar Upload */}
+                <div className="flex flex-col items-center gap-4">
+                  <div className="relative group">
+                    <div className="w-32 h-32 rounded-3xl bg-slate-100 border-2 border-dashed border-slate-200 flex items-center justify-center overflow-hidden transition-all group-hover:border-blue-400">
+                      {avatar ? (
+                        <img src={getFileUrl(avatar)} alt="Avatar" className="w-full h-full object-cover" />
+                      ) : (
+                        <div className="text-slate-400 flex flex-col items-center">
+                          <User size={40} />
+                          <span className="text-[10px] font-bold uppercase mt-1">Chưa có ảnh</span>
+                        </div>
+                      )}
+                      
+                      {isUploading && (
+                        <div className="absolute inset-0 bg-white/80 backdrop-blur-[2px] flex items-center justify-center z-10">
+                          <Loader2 size={24} className="animate-spin text-blue-600" />
+                        </div>
+                      )}
+                    </div>
+                    
+                    <label className="absolute -bottom-2 -right-2 w-10 h-10 bg-blue-600 text-white rounded-2xl flex items-center justify-center cursor-pointer shadow-lg hover:bg-blue-700 transition-all hover:scale-110 active:scale-95 border-4 border-white">
+                      <Camera size={18} />
+                      <input type="file" className="hidden" accept="image/*" onChange={handleAvatarChange} disabled={isUploading} />
+                    </label>
+                  </div>
+                  <div className="text-center">
+                    <p className="text-xs font-bold text-slate-900 uppercase tracking-widest">Ảnh đại diện</p>
+                    <p className="text-[10px] text-slate-500 mt-1">JPG, PNG, WEBP (Max 2MB)</p>
+                  </div>
+                </div>
+
+                <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div>
                   <label className="block text-sm font-medium text-slate-700 mb-1">Email đăng nhập</label>
                   <input
@@ -181,6 +241,7 @@ export default function SettingsView({ user, onUserUpdate, openChangePassword }:
                   />
                 </div>
               </div>
+            </div>
 
               <div className="flex items-center gap-4 pt-6 mt-4 border-t border-slate-100">
                 <button

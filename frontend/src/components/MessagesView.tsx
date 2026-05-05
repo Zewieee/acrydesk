@@ -8,9 +8,10 @@ import { io, Socket } from 'socket.io-client';
 interface MessagesViewProps {
   rfqs: RFQ[];
   defaultSelectedId?: string | null;
+  onMessageSent?: () => void;
 }
 
-export default function MessagesView({ rfqs, defaultSelectedId }: MessagesViewProps) {
+export default function MessagesView({ rfqs, defaultSelectedId, onMessageSent }: MessagesViewProps) {
   const [selectedId, setSelectedId] = useState<string | null>(defaultSelectedId || null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [newMessage, setNewMessage] = useState('');
@@ -120,6 +121,7 @@ export default function MessagesView({ rfqs, defaultSelectedId }: MessagesViewPr
       });
       setNewMessage('');
       setPendingFiles([]);
+      if (onMessageSent) onMessageSent();
     } catch (error) {
       console.error('Failed to send message', error);
     } finally {

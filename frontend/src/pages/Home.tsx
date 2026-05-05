@@ -1,6 +1,7 @@
 import { Phone, Check, ArrowRight, Play, MapPin, Mail, Globe, Menu, X, ArrowUpRight, Clock } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { getAnnouncementsAPI, type Announcement } from '../api/announcement';
+import SimpleChatbot from '../components/SimpleChatbot';
 
 export default function Home({
    onGoLogin,
@@ -45,10 +46,10 @@ export default function Home({
          <div className="bg-black text-white py-3 px-6 hidden sm:block">
             <div className="max-w-7xl mx-auto flex justify-between items-center text-xs font-bold uppercase tracking-widest text-neutral-400">
                <div className="flex gap-8">
-                  <span className="flex items-center gap-2"><MapPin size={14} className="text-blue-500" /> KCN Quang Minh, Mê Linh, Hà Nội</span>
-                  <span className="flex items-center gap-2"><Mail size={14} className="text-blue-500" /> sales@opep.vn</span>
+                  <span className="flex items-center gap-2"><MapPin size={14} className="text-blue-500" /> Ngõ 156 Đường Tam Trinh, P. Hoàng Mai, Hà Nội</span>
+                  <span className="flex items-center gap-2"><Mail size={14} className="text-blue-500" /> opepvn1@gmail.com</span>
                </div>
-               <div>Industrial Plastics & Environmental Technology</div>
+               <div>Nhựa Kỹ Thuật & Thiết Bị Môi Trường Công Nghiệp</div>
             </div>
          </div>
 
@@ -103,7 +104,7 @@ export default function Home({
                         GIẢI PHÁP <br/> NHỰA <br/> KỸ THUẬT.
                      </h2>
                      <p className="text-lg md:text-xl text-neutral-600 leading-relaxed mb-16 max-w-md font-normal">
-                        Tiên phong cung cấp thiết bị nhựa đặc chủng chống ăn mòn và hệ thống xử lý khí thải công nghiệp hiệu suất cao tại Việt Nam.
+                        Tiên phong sản xuất, thi công và lắp đặt bồn chứa nhựa chống ăn mòn và thiết bị công nghiệp — mang đến giải pháp an toàn, bền vững, tiết kiệm cho doanh nghiệp Việt Nam.
                      </p>
                      
                      <div className="flex flex-col sm:flex-row gap-8 mb-16 items-start sm:items-center">
@@ -112,7 +113,8 @@ export default function Home({
                         </button>
                         <div className="flex flex-col justify-center">
                            <span className="text-[10px] text-neutral-500 uppercase tracking-widest mb-1.5 font-bold">Hotline Hỗ Trợ 24/7</span>
-                           <span className="text-3xl font-bold tracking-tight text-black">0913 213 091</span>
+                           <span className="text-2xl font-bold tracking-tight text-black">0913 213 091</span>
+                           <span className="text-sm text-neutral-500 font-medium">(024) 2219 6916</span>
                         </div>
                      </div>
 
@@ -144,7 +146,7 @@ export default function Home({
                {[
                   { label: 'Năm kinh nghiệm', val: '10+' },
                   { label: 'Tỉ lệ hài lòng', val: '99%' },
-                  { label: 'Dự án công nghiệp', val: '500+' },
+                  { label: 'Nhân viên', val: '50+' },
                   { label: 'Khách hàng', val: '2000+' }
                ].map((s, i) => (
                   <div key={s.label} className={`p-10 lg:p-16 text-center lg:text-left ${i < 2 ? 'border-b lg:border-b-0 border-neutral-200' : ''}`}>
@@ -175,10 +177,10 @@ export default function Home({
                      </h2>
                   </div>
                   <p className="text-xl text-neutral-600 leading-relaxed font-normal max-w-lg">
-                     OPEP Việt Nam vinh dự là nhà sản xuất thiết bị nhựa kỹ thuật uy tín phục vụ môi trường hóa chất ăn mòn cao. Thay vì chỉ cung cấp sản phẩm máy móc rập khuôn, chúng tôi cung cấp <strong>giải pháp kỹ thuật toàn diện</strong>, đặt sự bền vững của doanh nghiệp bạn lên hàng đầu.
+                     <strong>Công Ty TNHH OPEP Việt Nam</strong> — tiên phong sản xuất và lắp đặt bồn chứa nhựa, thiết bị xử lý khí chống ăn mòn tại Việt Nam. Chúng tôi không chỉ cung cấp sản phẩm — chúng tôi mang đến <strong>giải pháp công nghiệp toàn diện</strong>, an toàn, bền vững và tiết kiệm cho từng dự án.
                   </p>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-8 gap-x-6 border-t border-neutral-200 pt-12">
-                     {['Tư vấn kĩ thuật 24/7', 'Thi công lắp đặt trọn gói', 'Bảo hành lên tới 24 tháng', 'Vật liệu đạt chuẩn quốc tế'].map(t => (
+                     {['Tư vấn miễn phí tận nơi', 'Chuyên môn kỹ thuật cao', 'Hỗ trợ 24/7', 'Sản xuất trực tiếp — giá tốt nhất'].map(t => (
                         <div key={t} className="flex items-start gap-4">
                            <Check size={24} strokeWidth={2.5} className="text-blue-600 shrink-0" />
                            <span className="font-bold tracking-tight text-lg">{t}</span>
@@ -240,18 +242,21 @@ export default function Home({
                   </h2>
                </div>
 
-               <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-neutral-800 border-t border-neutral-800">
+               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-neutral-800 border-t border-neutral-800">
                   {[
-                     { icon: <Check size={48} strokeWidth={1.5} />, title: 'Kỹ thuật tay nghề cao', desc: 'Đội ngũ kĩ sư và thợ hàn nhựa giàu kinh nghiệm trong lĩnh vực xử lý hóa chất công nghiệp.' },
-                     { icon: <Phone size={48} strokeWidth={1.5} />, title: 'Hỗ trợ dự án chu đáo', desc: 'Tư vấn giải pháp miễn phí và khảo sát thực tế tại mọi công trình của khách hàng.' },
-                     { icon: <Globe size={48} strokeWidth={1.5} />, title: 'Mạng lưới cung ứng rộng', desc: 'Phân phối vật tư và thiết bị trên khắp cả nước với tiến độ sản xuất nhanh nhất.' }
+                     { icon: <Check size={48} strokeWidth={1.5} />, title: 'Tư vấn miễn phí', desc: 'Khảo sát thực địa và tư vấn kỹ thuật không mất phí — chúng tôi hiểu bài toán của bạn trước khi báo giá.' },
+                     { icon: <Check size={48} strokeWidth={1.5} />, title: 'Chuyên môn cao', desc: 'Đội ngũ kỹ sư và thợ hàn nhựa giàu kinh nghiệm trong xử lý môi trường hóa chất ăn mòn công nghiệp.' },
+                     { icon: <Phone size={48} strokeWidth={1.5} />, title: 'Hỗ trợ 24/7', desc: 'Luôn sẵn sàng tiếp nhận yêu cầu kỹ thuật và xử lý sự cố khẩn cấp mọi lúc, mọi nơi.' },
+                     { icon: <Globe size={48} strokeWidth={1.5} />, title: 'Giá trị tối ưu', desc: 'Sản xuất trực tiếp — không qua trung gian, đảm bảo giá thành cạnh tranh nhất thị trường.' },
+                     { icon: <Check size={48} strokeWidth={1.5} />, title: 'Sản xuất trực tiếp', desc: 'Xưởng sản xuất hiện đại, dây chuyền công nghệ cao, kiểm soát chất lượng nghiêm ngặt từng công đoạn.' },
+                     { icon: <Check size={48} strokeWidth={1.5} />, title: 'Cam kết chất lượng', desc: 'Bảo hành sản phẩm và dịch vụ hậu mãi toàn diện — sự hài lòng của khách hàng là nguyên tắc vận hành.' },
                   ].map((benefit, i) => (
-                     <div key={i} className={`py-12 md:py-16 ${i === 0 ? 'md:pr-12' : i === 1 ? 'md:px-12' : 'md:pl-12'} flex flex-col h-full`}>
+                     <div key={i} className={`py-12 md:py-16 px-8 flex flex-col h-full border-b lg:border-b-0 border-neutral-800`}>
                         <div className="text-blue-500 mb-10">
                            {benefit.icon}
                         </div>
-                        <h4 className="text-3xl font-bold tracking-tight mb-6">{benefit.title}</h4>
-                        <p className="text-neutral-400 font-normal leading-relaxed text-lg max-w-sm">{benefit.desc}</p>
+                        <h4 className="text-2xl font-bold tracking-tight mb-6">{benefit.title}</h4>
+                        <p className="text-neutral-400 font-normal leading-relaxed text-base max-w-sm">{benefit.desc}</p>
                      </div>
                   ))}
                </div>
@@ -274,7 +279,7 @@ export default function Home({
                            </div>
                         </div>
                         <p className="text-neutral-400 font-normal leading-relaxed mb-8 max-w-sm">
-                           Nhà cung cấp số 1 về nhựa kỹ thuật đặc chủng và xử lý khí phòng Lab tại Việt Nam.
+                           Nhà sản xuất và lắp đặt bồn chứa nhựa, thiết bị xử lý khí công nghiệp hàng đầu Việt Nam — an toàn, bền vững, tiết kiệm.
                         </p>
                      </div>
                      <p className="text-sm text-neutral-500 uppercase tracking-widest font-bold">EST. 2012</p>
@@ -300,15 +305,15 @@ export default function Home({
                      <ul className="space-y-8">
                         <li className="flex items-start gap-4">
                            <MapPin size={24} className="text-neutral-600 shrink-0 mt-0.5" />
-                           <span className="text-white font-bold leading-relaxed">KCN Quang Minh<br/>Mê Linh, Hà Nội, Việt Nam</span>
+                           <span className="text-white font-bold leading-relaxed">Số 70, Nghách 109, Ngõ 156<br/>Đường Tam Trinh, P. Hoàng Mai<br/>TP. Hà Nội, Việt Nam</span>
                         </li>
-                        <li className="flex items-center gap-4">
-                           <Phone size={24} className="text-neutral-600 shrink-0" />
+                        <li className="flex flex-col gap-1 pl-10">
+                           <span className="text-white font-bold">(024) 2219 6916</span>
                            <span className="text-white font-bold">0913 213 091</span>
                         </li>
                         <li className="flex items-center gap-4">
                            <Mail size={24} className="text-neutral-600 shrink-0" />
-                           <span className="text-white font-bold">sales@opep.vn</span>
+                           <span className="text-white font-bold">opepvn1@gmail.com</span>
                         </li>
                      </ul>
                   </div>
@@ -317,7 +322,7 @@ export default function Home({
                   <div className="lg:col-span-3 h-56 border border-neutral-800 bg-neutral-900 overflow-hidden relative">
                      <iframe
                         title="map"
-                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3719.9827059733!2d105.794!3d21.189!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjHCsDExJzIwLjgiTiAxMDXCsDQ3JzM4LjQiRQ!5e0!3m2!1svi!2s!4v1650000000000!5m2!1svi!2s"
+                        src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3725.0!2d105.8679!3d20.9897!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMjDCsDU5JzIyLjkiTiAxMDXCsDUyJzA0LjQiRQ!5e0!3m2!1svi!2s!4v1700000000000!5m2!1svi!2s"
                         width="100%"
                         height="100%"
                         style={{ border: 0 }}
@@ -369,6 +374,9 @@ export default function Home({
                </div>
             </div>
          )}
+
+         {/* Chatbot Overlay */}
+         <SimpleChatbot />
       </div>
    );
 }

@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import Message from '../models/Message.model.js';
 import CustomerRequest from '../models/Request.model.js';
+import User from '../models/User.model.js';
 import { createNotification } from './notification.controller.js';
 
 export const getMessages = async (req: any, res: Response) => {
@@ -59,7 +60,9 @@ export const sendMessage = async (req: any, res: Response) => {
 
     const populatedMessage = await Message.findById(message._id).populate('senderId', 'name email role');
 
-    // Emit socket.io event to room
+    const preview = (content || (attachments?.length > 0 ? '[Tệp đính kèm]' : '')).substring(0, 80);
+
+    // Emit socket.io event to room (cho người đang mở tab chat)
     const io = req.app.get('io');
     if (io) {
       io.to(requestId).emit('new_message', populatedMessage);
@@ -67,24 +70,48 @@ export const sendMessage = async (req: any, res: Response) => {
 
     // Notify the other party
     if (req.userRole === 'customer') {
-      // Notify staff
+      // DB notification cho staff
       await createNotification(
-        null, 
+        null,
         ['sales', 'manager', 'engineer'],
         'Tin nhắn mới từ khách hàng',
-        `[${rfq.code}] Khách hàng: "${(content || (attachments && attachments.length > 0 ? '[Tệp đính kèm]' : '')).substring(0, 60)}${content?.length > 60 ? '...' : ''}"`,
-        requestId // relatedId là RFQ ID
+        `[${rfq.code}] ${rfq.customerName}: "${preview}"`,
+        requestId,
+        'new_message'
       );
+      // Popup realtime cho từng staff
+      if (io) {
+        const staffUsers = await User.find({ role: { $in: ['sales', 'manager', 'engineer'] } }).select('_id');
+        staffUsers.forEach(u => {
+          io.to(u._id.toString()).emit('new_message_popup', {
+            rfqId: requestId,
+            rfqCode: rfq.code,
+            senderName: rfq.customerName,
+            preview,
+          });
+        });
+      }
     } else {
-      // Notify customer
+      // DB notification cho customer
       if (rfq.createdBy) {
+        const senderName = (populatedMessage as any).senderId?.name || 'Nhân viên';
         await createNotification(
           rfq.createdBy.toString(),
           [],
           'Tin nhắn mới từ nhân viên',
-          `[${rfq.code}] Nhân viên: "${(content || (attachments && attachments.length > 0 ? '[Tệp đính kèm]' : '')).substring(0, 60)}${content?.length > 60 ? '...' : ''}"`,
-          requestId // relatedId là RFQ ID
+          `[${rfq.code}] ${senderName}: "${preview}"`,
+          requestId,
+          'new_message'
         );
+        // Popup realtime cho customer
+        if (io) {
+          io.to(rfq.createdBy.toString()).emit('new_message_popup', {
+            rfqId: requestId,
+            rfqCode: rfq.code,
+            senderName,
+            preview,
+          });
+        }
       }
     }
 

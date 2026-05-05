@@ -94,3 +94,8 @@ export const updateProductionStageAPI = async (id: string, productionStage: stri
   const response = await api.patch(`/requests/${id}/production-stage`, { productionStage });
   return mapBackendToRFQ(response.data);
 };
+
+export const reorderRFQAPI = async (id: string): Promise<RFQ> => {
+  const response = await api.post(`/requests/${id}/reorder`);
+  return mapBackendToRFQ(response.data);
+};

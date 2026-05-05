@@ -2,25 +2,48 @@
 import { useState } from 'react';
 import { Phone, Menu, X, ArrowRight, Search, Filter, Home as HomeIcon, MapPin, Mail, Trash2 } from 'lucide-react';
 
-// Category Base Images
-import imgPE from '../assets/catalog/pe-tank.png';
-import imgHood from '../assets/catalog/fume-hood.png';
-import imgLab from '../assets/catalog/lab-bench.png';
-import imgAcrylic from '../assets/catalog/acrylic.png';
-import imgChemTank from '../assets/catalog/chem-tank.png';
-import imgScrubber from '../assets/catalog/scrubber.png';
-import imgFan from '../assets/catalog/fan.png';
-import imgSheet from '../assets/catalog/plastic-sheets.png';
+// Ảnh lấy từ opep.com.vn
+const IMGS = {
+  // Bồn Bể Nhựa PE
+  pe500:    'https://opep.com.vn/wp-content/uploads/2025/08/gen-h-z6909802607457_0e111cc735602542c13526cf6eff1500-500x500.jpg',
+  pe1000:   'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909802607402_87083c1fc5d625bf5e4b0513c7d61de2-500x500.jpg',
+  pe2000:   'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909802607435_d492f32ebc046bd7f83334289c047a7e-500x500.jpg',
 
-// Specific Item Variations
-import imgPETall from '../assets/catalog/pe-tank-1000l.png';
-import imgPEHorizontal from '../assets/catalog/pe-tank-2000l.png';
-import imgHood15 from '../assets/catalog/fume-hood-15m.png';
-import imgChemCabinet from '../assets/catalog/chem-cabinet.png';
-import imgLabShelf from '../assets/catalog/lab-shelf.png';
-import imgGlassRack from '../assets/catalog/glass-rack.png';
-import imgAcrylicCover from '../assets/catalog/acrylic-cover.png';
-import imgMicaBox from '../assets/catalog/mica-box.png';
+  // Tủ Hút Khí Độc
+  hood1:    'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909806260101_75e3132b047f7106d62d140130094cfa-500x500.jpg',
+  hood2:    'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909806271287_68cff210e391509c7717ff859a8132d3-500x500.jpg',
+  hood3:    'https://opep.com.vn/wp-content/uploads/2025/08/gen-h-z6909806243558_dd16d70c90c42746ccdbbd03d41fd63b-500x500.jpg',
+
+  // Trang Thiết Bị Phòng Thí Nghiệm (dùng ảnh tủ hút + acrylic trong môi trường lab)
+  lab1:     'https://opep.com.vn/wp-content/uploads/2025/08/gen-h-z6909806260049_bf282c3a44be32626f16c75831b3665c-500x500.jpg',
+  lab2:     'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909806243634_17ad47ef27464820389c38c7358fafcf-500x500.jpg',
+  lab3:     'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909806243635_a603c36158d75b00f79ebf6f9cbe1166-500x500.jpg',
+
+  // Sản Phẩm Bằng Acrylic
+  acrylic1: 'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909876287089_db9efcbce550315e4400cfcf29590a2b-1-500x500.jpg',
+  acrylic2: 'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909876287082_761dc6f9b0b7116bb45fdc33ad7eee0b-500x500.jpg',
+  acrylic3: 'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909876287081_74a8fc5510b2a8779f4294e873bfceaa-500x500.jpg',
+
+  // Bồn Bể Nhựa PP, PVC, FRP
+  pp1:      'https://opep.com.vn/wp-content/uploads/2025/08/gen-h-z6909747996589_a8b74af4161735e6f469a587337342a6-500x500.jpg',
+  pp2:      'https://opep.com.vn/wp-content/uploads/2025/08/gen-h-z6909747996636_be8a72d73890d3552f9d21b247716fb3-500x500.jpg',
+  pp3:      'https://opep.com.vn/wp-content/uploads/2025/08/gen-h-z6909747996637_8461a27f50769d696991667ac80badec-500x500.jpg',
+
+  // Thiết Bị Xử Lý Khí Thải (dùng ảnh bồn nhựa công nghiệp)
+  scrubber1:'https://opep.com.vn/wp-content/uploads/2025/08/gen-h-z6909748010913_4f03016fcafc98e69ad5dcb33e8f331b-500x500.jpg',
+  scrubber2:'https://opep.com.vn/wp-content/uploads/2025/08/gen-h-z6909748010914_0e7b88156658a73e16616be871065ba0-500x500.jpg',
+  scrubber3:'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909747996631_b9e94af28e4863776f653144698efbae-500x500.jpg',
+
+  // Quạt Hút Ly Tâm
+  fan1:     'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909805570487_3ab314f886b5a6d1e9e00e0266c0d3f6-500x500.jpg',
+  fan2:     'https://opep.com.vn/wp-content/uploads/2025/08/gen-h-z6909805584800_d67a283169920ec5b7b5c7cdcfc06a8d-500x500.jpg',
+  fan3:     'https://opep.com.vn/wp-content/uploads/2025/08/gen-h-z6909805601519_00b2df0952d992da74505d48ec3965b3-500x500.jpg',
+
+  // Nhựa Kỹ Thuật
+  sheet1:   'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909840608490_ef3e78a1e47349aae80871395ebb4391-500x500.jpg',
+  sheet2:   'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909840608513_f444cfdaebc7bdfc489e706cfec2d554-500x500.jpg',
+  sheet3:   'https://opep.com.vn/wp-content/uploads/2025/08/gen-n-z6909840608512_eb7b888248a162ba81dc9f2efe97c7b3-500x500.jpg',
+};
 
 export default function Catalog({
    onGoLogin,
@@ -39,44 +62,44 @@ export default function Catalog({
    // Structured Data with Variations
    const allProducts = [
       // Bồn Bể Nhựa PE
-      { id: 'SP-01', name: 'Bồn nhựa PE 500L', category: 'Bồn Bể Nhựa PE', image: imgPE },
-      { id: 'SP-02', name: 'Bồn nhựa PE 1000L đứng', category: 'Bồn Bể Nhựa PE', image: imgPETall },
-      { id: 'SP-03', name: 'Bồn nhựa PE 2000L ngang', category: 'Bồn Bể Nhựa PE', image: imgPEHorizontal },
-      
+      { id: 'SP-01', name: 'Bồn nhựa PE 500L',        category: 'Bồn Bể Nhựa PE', image: IMGS.pe500 },
+      { id: 'SP-02', name: 'Bồn nhựa PE 1000L đứng',  category: 'Bồn Bể Nhựa PE', image: IMGS.pe1000 },
+      { id: 'SP-03', name: 'Bồn nhựa PE 2000L ngang', category: 'Bồn Bể Nhựa PE', image: IMGS.pe2000 },
+
       // Tủ Hút Khí Độc
-      { id: 'SP-04', name: 'Tủ hút khí độc 1.2m', category: 'Tủ Hút Khí Độc', image: imgHood },
-      { id: 'SP-05', name: 'Tủ hút khí độc 1.5m chịu acid', category: 'Tủ Hút Khí Độc', image: imgHood15 },
-      { id: 'SP-06', name: 'Tủ đựng hóa chất có lọc', category: 'Tủ Hút Khí Độc', image: imgChemCabinet },
-      
+      { id: 'SP-04', name: 'Tủ hút khí độc 1.2m',          category: 'Tủ Hút Khí Độc', image: IMGS.hood1 },
+      { id: 'SP-05', name: 'Tủ hút khí độc 1.5m chịu acid', category: 'Tủ Hút Khí Độc', image: IMGS.hood2 },
+      { id: 'SP-06', name: 'Tủ đựng hóa chất có lọc',       category: 'Tủ Hút Khí Độc', image: IMGS.hood3 },
+
       // Trang Thiết Bị Phòng Thí Nghiệm
-      { id: 'SP-07', name: 'Bàn thí nghiệm trung tâm', category: 'Trang Thiết Bị Phòng Thí Nghiệm', image: imgLab },
-      { id: 'SP-08', name: 'Kệ mẫu phòng Lab', category: 'Trang Thiết Bị Phòng Thí Nghiệm', image: imgLabShelf },
-      { id: 'SP-09', name: 'Giá treo dụng cụ thủy tinh', category: 'Trang Thiết Bị Phòng Thí Nghiệm', image: imgGlassRack },
-      
+      { id: 'SP-07', name: 'Bàn thí nghiệm trung tâm',   category: 'Trang Thiết Bị Phòng Thí Nghiệm', image: IMGS.lab1 },
+      { id: 'SP-08', name: 'Kệ mẫu phòng Lab',           category: 'Trang Thiết Bị Phòng Thí Nghiệm', image: IMGS.lab2 },
+      { id: 'SP-09', name: 'Giá treo dụng cụ thủy tinh', category: 'Trang Thiết Bị Phòng Thí Nghiệm', image: IMGS.lab3 },
+
       // Sản Phẩm Bằng Acrylic
-      { id: 'SP-10', name: 'Bể cá Acrylic trang trí', category: 'Sản Phẩm Bằng Acrylic', image: imgAcrylic },
-      { id: 'SP-11', name: 'Nắp máy Acrylic bảo vệ', category: 'Sản Phẩm Bằng Acrylic', image: imgAcrylicCover },
-      { id: 'SP-12', name: 'Hộp mica trưng bày', category: 'Sản Phẩm Bằng Acrylic', image: imgMicaBox },
-      
-      // Bồn Bể Nhựa PP, PVC, FRP (Using base img for variations due to quota limit)
-      { id: 'SP-13', name: 'Bồn mạ kẽm nhựa PP', category: 'Bồn Bể Nhựa PP, PVC, FRP', image: imgChemTank },
-      { id: 'SP-14', name: 'Bồn chứa hóa chất PVC', category: 'Bồn Bể Nhựa PP, PVC, FRP', image: imgChemTank },
-      { id: 'SP-15', name: 'Bồn Composite FRP 5m3', category: 'Bồn Bể Nhựa PP, PVC, FRP', image: imgChemTank },
-      
+      { id: 'SP-10', name: 'Bể cá Acrylic trang trí', category: 'Sản Phẩm Bằng Acrylic', image: IMGS.acrylic1 },
+      { id: 'SP-11', name: 'Nắp máy Acrylic bảo vệ',  category: 'Sản Phẩm Bằng Acrylic', image: IMGS.acrylic2 },
+      { id: 'SP-12', name: 'Hộp mica trưng bày',       category: 'Sản Phẩm Bằng Acrylic', image: IMGS.acrylic3 },
+
+      // Bồn Bể Nhựa PP, PVC, FRP
+      { id: 'SP-13', name: 'Bồn mạ kẽm nhựa PP',    category: 'Bồn Bể Nhựa PP, PVC, FRP', image: IMGS.pp1 },
+      { id: 'SP-14', name: 'Bồn chứa hóa chất PVC', category: 'Bồn Bể Nhựa PP, PVC, FRP', image: IMGS.pp2 },
+      { id: 'SP-15', name: 'Bồn Composite FRP 5m3', category: 'Bồn Bể Nhựa PP, PVC, FRP', image: IMGS.pp3 },
+
       // Thiết Bị Xử Lý Khí Thải
-      { id: 'SP-16', name: 'Tháp hấp thụ Scrubber PP', category: 'Thiết Bị Xử Lý Khí Thải', image: imgScrubber },
-      { id: 'SP-17', name: 'Hệ thống khử mùi than hoạt tính', category: 'Thiết Bị Xử Lý Khí Thải', image: imgScrubber },
-      { id: 'SP-18', name: 'Ống dẫn khí thải nhựa PP', category: 'Thiết Bị Xử Lý Khí Thải', image: imgScrubber },
-      
+      { id: 'SP-16', name: 'Tháp hấp thụ Scrubber PP',        category: 'Thiết Bị Xử Lý Khí Thải', image: IMGS.scrubber1 },
+      { id: 'SP-17', name: 'Hệ thống khử mùi than hoạt tính', category: 'Thiết Bị Xử Lý Khí Thải', image: IMGS.scrubber2 },
+      { id: 'SP-18', name: 'Ống dẫn khí thải nhựa PP',        category: 'Thiết Bị Xử Lý Khí Thải', image: IMGS.scrubber3 },
+
       // Quạt Hút Ly Tâm
-      { id: 'SP-19', name: 'Quạt hút ly tâm PP 1.1kW', category: 'Quạt Hút Ly Tâm', image: imgFan },
-      { id: 'SP-20', name: 'Quạt ly tâm cao áp chịu acid', category: 'Quạt Hút Ly Tâm', image: imgFan },
-      { id: 'SP-21', name: 'Phụ kiện quạt hút nhựa', category: 'Quạt Hút Ly Tâm', image: imgFan },
-      
+      { id: 'SP-19', name: 'Quạt hút ly tâm PP 1.1kW',    category: 'Quạt Hút Ly Tâm', image: IMGS.fan1 },
+      { id: 'SP-20', name: 'Quạt ly tâm cao áp chịu acid', category: 'Quạt Hút Ly Tâm', image: IMGS.fan2 },
+      { id: 'SP-21', name: 'Phụ kiện quạt hút nhựa',       category: 'Quạt Hút Ly Tâm', image: IMGS.fan3 },
+
       // Nhựa Kỹ Thuật
-      { id: 'SP-22', name: 'Tấm nhựa PP ghi xám 10mm', category: 'Nhựa Kỹ Thuật', image: imgSheet },
-      { id: 'SP-23', name: 'Cây nhựa chịu hóa chất', category: 'Nhựa Kỹ Thuật', image: imgSheet },
-      { id: 'SP-24', name: 'Màng nhựa PVC mềm', category: 'Nhựa Kỹ Thuật', image: imgSheet },
+      { id: 'SP-22', name: 'Tấm nhựa PP ghi xám 10mm', category: 'Nhựa Kỹ Thuật', image: IMGS.sheet1 },
+      { id: 'SP-23', name: 'Cây nhựa chịu hóa chất',   category: 'Nhựa Kỹ Thuật', image: IMGS.sheet2 },
+      { id: 'SP-24', name: 'Màng nhựa PVC mềm',         category: 'Nhựa Kỹ Thuật', image: IMGS.sheet3 },
    ];
 
    const categories = [

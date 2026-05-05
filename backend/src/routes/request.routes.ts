@@ -9,6 +9,7 @@ import {
   deleteRequest,
   submitFeedback,
   updateProductionStage,
+  reorderRequest,
 } from '../controllers/request.controller.js';
 import { authMiddleware, roleMiddleware } from '../middleware/auth.middleware.js';
 
@@ -23,6 +24,7 @@ router.put('/:id', roleMiddleware(['customer', 'sales', 'manager']), updateReque
 router.patch('/:id/status', roleMiddleware(['sales', 'engineer', 'manager']), updateRequestStatus);
 router.patch('/:id/assign', roleMiddleware(['manager']), assignRequest);
 router.post('/:id/feedback', roleMiddleware(['customer']), submitFeedback);
+router.post('/:id/reorder', roleMiddleware(['customer']), reorderRequest);
 router.delete('/:id', roleMiddleware(['customer', 'sales', 'manager']), deleteRequest);
 router.patch('/:id/production-stage', roleMiddleware(['sales', 'engineer', 'manager']), updateProductionStage);
 

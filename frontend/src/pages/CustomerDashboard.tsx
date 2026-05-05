@@ -1,5 +1,7 @@
 // src/pages/CustomerDashboard.tsx
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { io } from 'socket.io-client';
+import toast from 'react-hot-toast';
 import {
   FileText,
   Plus,
@@ -31,7 +33,8 @@ import {
   Download,
 } from 'lucide-react';
 import { type RFQ, statusConfig } from '../types/rfq';
-import { getRFQsAPI, createRFQAPI, updateRFQAPI, deleteRFQAPI, submitFeedbackAPI } from '../api/rfq';
+import { getRFQsAPI, createRFQAPI, updateRFQAPI, deleteRFQAPI, submitFeedbackAPI, reorderRFQAPI } from '../api/rfq';
+import { getDocumentsAPI, type AcryDocument } from '../api/document';
 import { type Quotation, getQuotationsAPI, acceptQuotationAPI, rejectQuotationAPI } from '../api/quotation';
 import { getNotificationsAPI, markAsReadAPI, type Notification } from '../api/notification';
 import { getAnnouncementsAPI, type Announcement } from '../api/announcement';
@@ -49,7 +52,7 @@ interface CustomerDashboardProps {
   onLogout: () => void;
 }
 
-type Tab = 'overview' | 'my-requests' | 'quotations' | 'production' | 'announcements' | 'settings' | 'messages' | 'notifications';
+type Tab = 'overview' | 'my-requests' | 'quotations' | 'production' | 'announcements' | 'settings' | 'messages' | 'notifications' | 'documents';
 
 export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) {
   const logoUrl = new URL('../assets/logo.png', import.meta.url).toString();
@@ -150,11 +153,76 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
     } catch (e) { /* silent */ }
   }, []);
 
+  // Documents
+  const [documents, setDocuments] = useState<AcryDocument[]>([]);
+  const [isDocsLoading, setIsDocsLoading] = useState(false);
+  const fetchDocuments = useCallback(async () => {
+    setIsDocsLoading(true);
+    try {
+      const data = await getDocumentsAPI();
+      setDocuments(data);
+    } catch (e) {
+      console.error('Lỗi tải tài liệu:', e);
+    } finally {
+      setIsDocsLoading(false);
+    }
+  }, []);
+
   useEffect(() => {
     fetchNotifications();
     const interval = setInterval(fetchNotifications, 5000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
+
+  // Lắng nghe socket để nhận thông báo tiến độ realtime
+  useEffect(() => {
+    const userId = user?.id || user?._id;
+    if (!userId) return;
+
+    const socket = io('http://localhost:3000', { withCredentials: true });
+    socket.emit('joinRoom', userId);
+
+    socket.on('production_stage_updated', (data: { rfqCode: string; stageLabel: string; title: string; message: string }) => {
+      toast(
+        (t) => (
+          <div onClick={() => { setActiveTab('production'); toast.dismiss(t.id); }} className="cursor-pointer">
+            <p className="font-semibold text-slate-900">{data.title}</p>
+            <p className="text-sm text-slate-600 mt-0.5">{data.message}</p>
+            <p className="text-xs text-blue-600 mt-1 font-medium">Nhấn để xem tiến độ →</p>
+          </div>
+        ),
+        { duration: 6000, icon: '🏭', style: { maxWidth: 360 } }
+      );
+      fetchNotifications();
+      fetchRFQs();
+    });
+
+    socket.on('new_message_popup', (data: { rfqId: string; rfqCode: string; senderName: string; preview: string }) => {
+      toast(
+        (t) => (
+          <div
+            onClick={() => {
+              setActiveChatId(data.rfqId);
+              setActiveTab('messages');
+              toast.dismiss(t.id);
+            }}
+            className="cursor-pointer"
+          >
+            <p className="font-semibold text-slate-900">💬 Tin nhắn mới — {data.rfqCode}</p>
+            <p className="text-sm text-slate-600 mt-0.5">{data.senderName}: "{data.preview}"</p>
+            <p className="text-xs text-blue-600 mt-1 font-medium">Nhấn để mở chat →</p>
+          </div>
+        ),
+        { duration: 6000, style: { maxWidth: 380 } }
+      );
+      fetchNotifications();
+    });
+
+    return () => {
+      socket.emit('leaveRoom', userId);
+      socket.disconnect();
+    };
+  }, [user?.id, user?._id, fetchNotifications, fetchRFQs]);
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -183,6 +251,8 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
 
     if (n.type === 'quotation_sent') {
       setActiveTab('quotations');
+    } else if (n.type === 'production_stage') {
+      setActiveTab('production');
     } else if (n.type === 'new_message') {
       if (n.relatedId) {
         const targetRfq = rfqs.find(r => r.id === n.relatedId || (r as any)._id === n.relatedId);
@@ -213,6 +283,7 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
       setEditingRFQ(null);
       setInitialData(null);
       await fetchRFQs();
+      await fetchDocuments();
     } catch (error: any) {
       alert(error.response?.data?.message || 'Có lỗi xảy ra');
     }
@@ -294,7 +365,32 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
     setIsFormOpen(true);
   };
 
-  const handleReorder = (rfq: RFQ) => {
+  const handleReorder = async (rfq: RFQ) => {
+    if (!rfq || !rfq.id) return;
+
+    // Sử dụng setTimeout để đảm bảo sự kiện bubble hoàn tất trước khi hiện dialog
+    setTimeout(async () => {
+      const confirmed = confirm(`Bạn muốn đặt lại nhanh đơn hàng ${rfq.code}? Một yêu cầu mới sẽ được tạo với cùng thông tin sản phẩm.`);
+      
+      if (confirmed) {
+        try {
+          setIsLoading(true);
+          const newRfq = await reorderRFQAPI(rfq.id);
+          alert(`Đã tạo yêu cầu mới thành công: ${newRfq.code}`);
+          await fetchRFQs();
+          setActiveTab('my-requests');
+        } catch (error: any) {
+          console.error('Reorder error:', error);
+          const msg = error.response?.data?.message || 'Không thể đặt lại đơn hàng. Vui lòng thử lại sau.';
+          alert(msg);
+        } finally {
+          setIsLoading(false);
+        }
+      }
+    }, 10);
+  };
+
+  const handleDuplicate = (rfq: RFQ) => {
     setEditingRFQ(null);
     setInitialData({
       items: rfq.items,
@@ -509,6 +605,88 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
     </div>
   );
 
+  const DocumentsView = () => (
+    <div className="space-y-6 overflow-y-auto max-h-[calc(100vh-180px)] pr-2 custom-scrollbar">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h2 className="text-3xl font-black text-slate-900 mb-1">Kho tài liệu</h2>
+          <p className="text-slate-500">Tất cả bản vẽ, hợp đồng và file đính kèm của bạn</p>
+        </div>
+        <button 
+          onClick={fetchDocuments}
+          className="p-3 bg-white border border-slate-200 rounded-2xl hover:bg-slate-50 transition shadow-sm"
+          title="Làm mới"
+        >
+          <Repeat size={20} className={isDocsLoading ? 'animate-spin' : ''} />
+        </button>
+      </div>
+
+      {isDocsLoading ? (
+        <div className="flex flex-col items-center justify-center py-20">
+          <Loader2 size={48} className="text-blue-600 animate-spin mb-4" />
+          <p className="text-slate-500 font-medium">Đang tổng hợp tài liệu...</p>
+        </div>
+      ) : documents.length > 0 ? (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 pb-10">
+          {documents.map((doc) => (
+            <div key={doc.id} className="bg-white border border-slate-200 rounded-[2.5rem] p-6 hover:shadow-xl hover:border-blue-400 transition-all group flex flex-col h-full">
+              <div className="w-16 h-16 bg-slate-50 rounded-2xl flex items-center justify-center mb-6 group-hover:bg-blue-50 transition-colors">
+                <FileText size={32} className="text-slate-400 group-hover:text-blue-500" />
+              </div>
+              <div className="flex-1">
+                <h3 className="font-bold text-slate-900 mb-2 line-clamp-2 leading-tight h-10">
+                  {doc.name}
+                </h3>
+                <div className="flex items-center gap-2 mb-4">
+                  <span className={`px-2 py-0.5 rounded-lg text-[10px] font-bold uppercase tracking-wider ${
+                    doc.type === 'request' ? 'bg-purple-100 text-purple-600' : 'bg-orange-100 text-orange-600'
+                  }`}>
+                    {doc.type === 'request' ? 'Từ Yêu cầu' : 'Từ Tin nhắn'}
+                  </span>
+                  <span className="text-[11px] text-slate-400 font-bold uppercase">
+                    Mã: {doc.rfqCode}
+                  </span>
+                </div>
+                <div className="text-xs text-slate-500 flex items-center gap-1.5 font-medium">
+                  <Clock size={12} /> {new Date(doc.createdAt).toLocaleDateString('vi-VN')}
+                </div>
+              </div>
+              <div className="mt-6 pt-6 border-t border-slate-50 flex gap-2">
+                <a 
+                  href={getFileUrl(doc.url)} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex-1 py-2.5 bg-slate-900 hover:bg-blue-600 text-white rounded-xl font-bold transition text-xs flex items-center justify-center gap-2"
+                >
+                  <Eye size={14} /> Xem / Tải về
+                </a>
+                <button 
+                  onClick={() => {
+                    const target = rfqs.find(r => r.id === doc.rfqId);
+                    if (target) {
+                      setViewingRFQ(target);
+                      setActiveTab('my-requests');
+                    }
+                  }}
+                  className="w-10 h-10 bg-slate-50 hover:bg-slate-100 text-slate-600 rounded-xl transition flex items-center justify-center"
+                  title="Đi tới đơn hàng"
+                >
+                  <Activity size={18} />
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <div className="bg-white border-2 border-dashed border-slate-200 rounded-[3rem] p-20 text-center">
+          <FileSearch size={64} className="text-slate-200 mx-auto mb-6" />
+          <h3 className="text-xl font-bold text-slate-400">Chưa có tài liệu nào</h3>
+          <p className="text-slate-400">Tất cả file đính kèm bạn gửi hoặc nhận sẽ hiển thị tại đây.</p>
+        </div>
+      )}
+    </div>
+  );
+
   return (
     <div className="flex h-screen bg-slate-50 text-slate-800 overflow-hidden relative">
 
@@ -615,6 +793,22 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
             <li>
               <button
                 onClick={() => {
+                  setActiveTab('documents');
+                  fetchDocuments();
+                  setIsMobileSidebarOpen(false);
+                }}
+                className={`w-full flex items-center gap-3 px-5 py-3.5 rounded-2xl transition-all ${activeTab === 'documents'
+                  ? 'bg-blue-600 text-white shadow-lg'
+                  : 'hover:bg-slate-50 text-slate-600'
+                  }`}
+              >
+                <Paperclip size={20} />
+                <span className="font-medium">Kho tài liệu</span>
+              </button>
+            </li>
+            <li>
+              <button
+                onClick={() => {
                   setActiveTab('quotations');
                   setIsMobileSidebarOpen(false);
                 }}
@@ -682,9 +876,13 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
 
         {/* User info */}
         <div className="p-4 border-t border-slate-200">
-          <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-2xl">
-            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-              <User size={20} />
+          <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-2xl shadow-sm border border-slate-100">
+            <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center overflow-hidden border border-white shadow-inner">
+              {user?.avatar ? (
+                <img src={getFileUrl(user.avatar)} alt={userName} className="w-full h-full object-cover" />
+              ) : (
+                <User size={20} className="text-slate-500" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-slate-900 truncate">{userName}</p>
@@ -709,7 +907,14 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
               <Menu size={20} />
             </button>
             <h2 className="text-xl font-semibold text-slate-900 truncate">
-              {activeTab === 'overview' ? 'Tổng quan Dashboard' : activeTab === 'my-requests' ? 'Yêu cầu báo giá' : activeTab === 'quotations' ? 'Báo giá nhận được' : activeTab === 'production' ? 'Tiến độ đơn hàng' : activeTab === 'messages' ? 'Trao đổi' : activeTab === 'notifications' ? 'Thông báo' : 'Cài đặt'}
+              {activeTab === 'overview' ? 'Tổng quan Dashboard' : 
+               activeTab === 'my-requests' ? 'Yêu cầu báo giá' : 
+               activeTab === 'quotations' ? 'Báo giá nhận được' : 
+               activeTab === 'production' ? 'Tiến độ đơn hàng' : 
+               activeTab === 'messages' ? 'Trao đổi' : 
+               activeTab === 'notifications' ? 'Thông báo' : 
+               activeTab === 'documents' ? 'Kho tài liệu' :
+               'Cài đặt'}
             </h2>
           </div>
           <div className="flex items-center gap-2 md:gap-4">
@@ -764,8 +969,12 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
                   <p className="text-sm font-medium text-slate-900">{userName}</p>
                   <p className="text-xs text-slate-500">{userEmail}</p>
                 </div>
-                <div className="w-9 h-9 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-semibold">
-                  {userInitials}
+                <div className="w-9 h-9 bg-emerald-600 rounded-2xl flex items-center justify-center text-white font-semibold overflow-hidden border border-white/20 shadow-sm">
+                  {user?.avatar ? (
+                    <img src={getFileUrl(user.avatar)} alt={userName} className="w-full h-full object-cover" />
+                  ) : (
+                    userInitials
+                  )}
                 </div>
               </button>
 
@@ -816,9 +1025,19 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
             </div>
           )}
 
+          {activeTab === 'documents' && (
+            <div className="h-full">
+              <DocumentsView />
+            </div>
+          )}
+
           {activeTab === 'messages' && (
             <div className="h-full">
-              <MessagesView rfqs={rfqs} defaultSelectedId={activeChatId} />
+              <MessagesView 
+                rfqs={rfqs} 
+                defaultSelectedId={activeChatId} 
+                onMessageSent={fetchDocuments}
+              />
             </div>
           )}
 
@@ -945,23 +1164,48 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
                           </div>
                         </div>
                         <div className="flex gap-1 ml-4" onClick={e => e.stopPropagation()}>
-                          <button onClick={() => setViewingRFQ(rfq)} className="p-1.5 hover:bg-slate-50 rounded-lg transition" title="Xem">
-                            <Eye size={16} className="text-blue-600" />
+                          <button 
+                            onClick={() => setViewingRFQ(rfq)} 
+                            className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition" 
+                            title="Xem"
+                          >
+                            <Eye size={18} className="text-blue-600" />
                           </button>
                           {rfq.status === 'pending' && (
-                            <>
-                              <button onClick={() => openEdit(rfq)} className="p-1.5 hover:bg-slate-50 rounded-lg transition" title="Sửa">
-                                <Edit size={16} className="text-amber-600" />
+                            <div className="flex items-center gap-1">
+                              <button 
+                                onClick={() => openEdit(rfq)} 
+                                className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition" 
+                                title="Sửa"
+                              >
+                                <Edit size={18} className="text-amber-600" />
                               </button>
-                              <button onClick={() => handleDeleteRFQ(rfq.id)} className="p-1.5 hover:bg-slate-50 rounded-lg transition" title="Xóa">
-                                <Trash2 size={16} className="text-red-600" />
+                              <button 
+                                onClick={() => handleDeleteRFQ(rfq.id)} 
+                                className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition" 
+                                title="Xóa"
+                              >
+                                <Trash2 size={18} className="text-red-600" />
                               </button>
-                            </>
+                            </div>
                           )}
-                          {['completed', 'approved'].includes(rfq.status) && (
-                            <button onClick={(e) => { e.stopPropagation(); handleReorder(rfq); }} className="p-1.5 hover:bg-slate-50 rounded-lg transition text-emerald-600" title="Đặt lại (Reorder)">
-                              <Repeat size={16} />
-                            </button>
+                          {['completed', 'approved', 'rejected'].includes(rfq.status) && (
+                            <div className="flex items-center gap-1">
+                              <button 
+                                onClick={() => handleReorder(rfq)} 
+                                className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition text-emerald-600" 
+                                title="Đặt lại nhanh (Reorder)"
+                              >
+                                <Repeat size={18} />
+                              </button>
+                              <button 
+                                onClick={() => handleDuplicate(rfq)} 
+                                className="w-9 h-9 flex items-center justify-center hover:bg-slate-50 rounded-lg transition text-slate-600" 
+                                title="Sao chép & Chỉnh sửa"
+                              >
+                                <Plus size={18} />
+                              </button>
+                            </div>
                           )}
                         </div>
                       </div>
@@ -1289,6 +1533,24 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
                       </button>
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Re-order Button in Detail Modal */}
+              {['completed', 'approved', 'rejected'].includes(viewingRFQ.status) && (
+                <div className="flex gap-3 mt-4">
+                  <button
+                    onClick={() => handleReorder(viewingRFQ)}
+                    className="flex-1 py-3.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-xl font-bold transition flex items-center justify-center gap-2 text-sm shadow-sm"
+                  >
+                    <Repeat size={20} /> Đặt lại nhanh
+                  </button>
+                  <button
+                    onClick={() => handleDuplicate(viewingRFQ)}
+                    className="flex-1 py-3.5 bg-white border border-slate-200 text-slate-700 hover:bg-slate-50 rounded-xl font-bold transition flex items-center justify-center gap-2 text-sm shadow-sm"
+                  >
+                    <Plus size={20} /> Sao chép & Sửa
+                  </button>
                 </div>
               )}
 

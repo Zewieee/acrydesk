@@ -30,8 +30,8 @@ export const updateStaffStatus = async (req: Request, res: Response) => {
 
 export const updateMyProfile = async (req: any, res: Response) => {
   try {
-    const { name, phone } = req.body;
-    const user = await User.findByIdAndUpdate(req.userId, { name, phone }, { new: true }).select('-password');
+    const { name, phone, avatar } = req.body;
+    const user = await User.findByIdAndUpdate(req.userId, { name, phone, avatar }, { new: true }).select('-password');
     res.json({ message: 'Cập nhật thành công', user });
   } catch (error) {
     const msg = error instanceof Error ? error.message : 'Server error';

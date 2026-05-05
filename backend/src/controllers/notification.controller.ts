@@ -57,27 +57,27 @@ export const createNotification = async (
   roles: string[],
   title: string,
   message: string,
-  relatedId?: string
+  relatedId?: string,
+  type: string = 'new_message'
 ) => {
   try {
     let targetUserIds: string[] = [];
-    
+
     if (userId) {
       targetUserIds.push(userId);
     }
-    
+
     if (roles && roles.length > 0) {
       const users = await User.find({ role: { $in: roles } }).select('_id');
       targetUserIds = [...targetUserIds, ...users.map(u => u._id.toString())];
     }
-    
-    // Loại bỏ duplicate
+
     targetUserIds = [...new Set(targetUserIds)];
-    
+
     if (targetUserIds.length > 0) {
       const notifications = targetUserIds.map(id => ({
         userId: id,
-        type: 'new_message',
+        type,
         title,
         message,
         relatedId,

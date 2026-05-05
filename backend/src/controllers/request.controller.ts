@@ -1,6 +1,7 @@
 import type { Request, Response } from 'express';
 import CustomerRequest from '../models/Request.model.js';
 import Quotation from '../models/Quotation.model.js';
+import User from '../models/User.model.js';
 import { notifyStaffNewRFQ, createNotification } from './notification.controller.js';
 
 // Helper: tự động generate mã RFQ dạng RFQ-2024-001
@@ -34,7 +35,20 @@ export const createRequest = async (req: any, res: Response) => {
 
     // Thông báo cho staff khi customer tạo RFQ mới
     if (req.userRole === 'customer') {
-      notifyStaffNewRFQ(code, req.body.customerName || 'Khách hàng', request._id.toString());
+      await notifyStaffNewRFQ(code, req.body.customerName || 'Khách hàng', request._id.toString());
+
+      // Popup realtime cho từng staff
+      const io = req.app.get('io');
+      if (io) {
+        const staffUsers = await User.find({ role: { $in: ['sales', 'manager', 'engineer'] } }).select('_id');
+        staffUsers.forEach(u => {
+          io.to(u._id.toString()).emit('new_rfq_popup', {
+            rfqId: request._id.toString(),
+            rfqCode: code,
+            customerName: req.body.customerName || 'Khách hàng',
+          });
+        });
+      }
     }
 
     res.status(201).json(request);
@@ -177,18 +191,63 @@ export const assignRequest = async (req: Request, res: Response) => {
   }
 };
 
+const productionStageLabels: Record<string, string> = {
+  design: 'Thiết kế & Kỹ thuật',
+  materials_prep: 'Chuẩn bị vật tư',
+  machining: 'Cắt & Gia công thô',
+  assembly: 'Lắp ráp & Dán keo',
+  finishing: 'Hoàn thiện & Đánh bóng',
+  qc: 'Kiểm tra chất lượng (QC)',
+  packaging: 'Đóng gói',
+  delivering: 'Đang giao hàng',
+  done: 'Hoàn tất',
+};
+
 export const updateProductionStage = async (req: any, res: Response) => {
   try {
     const { productionStage } = req.body;
-    const request = await CustomerRequest.findByIdAndUpdate(
-      req.params.id,
-      { productionStage },
-      { new: true }
-    );
+
+    const request = await CustomerRequest.findById(req.params.id).populate('createdBy', '_id');
     if (!request) {
       res.status(404).json({ message: 'Khong tim thay yeu cau' });
       return;
     }
+
+    request.productionStage = productionStage;
+    await request.save();
+
+    const customerId = request.createdBy?._id?.toString() ?? null;
+    const stageLabel = productionStageLabels[productionStage] ?? productionStage;
+    const notifTitle = productionStage === 'done'
+      ? `Đơn hàng ${request.code} đã hoàn tất!`
+      : `Tiến độ đơn hàng ${request.code} được cập nhật`;
+    const notifMessage = productionStage === 'done'
+      ? `Đơn hàng ${request.code} đã hoàn thành toàn bộ quy trình sản xuất.`
+      : `Đơn hàng của bạn đang ở giai đoạn: ${stageLabel}.`;
+
+    if (customerId) {
+      await createNotification(
+        customerId,
+        [],
+        notifTitle,
+        notifMessage,
+        request._id.toString(),
+        'production_stage'
+      );
+
+      const io = req.app.get('io');
+      if (io) {
+        io.to(customerId).emit('production_stage_updated', {
+          rfqId: request._id.toString(),
+          rfqCode: request.code,
+          productionStage,
+          stageLabel,
+          title: notifTitle,
+          message: notifMessage,
+        });
+      }
+    }
+
     res.json(request);
   } catch (error) {
     res.status(500).json({ message: 'Loi server', error });
@@ -274,5 +333,41 @@ export const submitFeedback = async (req: any, res: Response) => {
     res.json(request);
   } catch (error) {
     res.status(500).json({ message: 'Lỗi server', error });
+  }
+};
+
+export const reorderRequest = async (req: any, res: Response) => {
+  try {
+    const existing = await CustomerRequest.findById(req.params.id);
+    if (!existing) {
+      res.status(404).json({ message: 'Không tìm thấy yêu cầu để đặt lại' });
+      return;
+    }
+
+    // Chỉ chủ nhân của đơn hàng mới được đặt lại
+    if (existing.createdBy?.toString() !== req.userId) {
+      res.status(403).json({ message: 'Không có quyền đặt lại yêu cầu này' });
+      return;
+    }
+
+    const code = await generateCode();
+    const newRequest = await CustomerRequest.create({
+      code,
+      customerName: existing.customerName,
+      customerPhone: existing.customerPhone,
+      customerEmail: existing.customerEmail,
+      items: existing.items,
+      description: `[ĐẶT LẠI] Từ đơn hàng ${existing.code}. ${existing.description || ''}`,
+      expectedDate: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0], // Mặc định 7 ngày sau
+      status: 'pending',
+      createdBy: req.userId,
+    });
+
+    notifyStaffNewRFQ(code, existing.customerName, newRequest._id.toString());
+
+    res.status(201).json(newRequest);
+  } catch (error) {
+    console.error('reorderRequest error:', error);
+    res.status(500).json({ message: 'Lỗi server khi đặt lại đơn hàng', error });
   }
 };

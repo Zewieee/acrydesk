@@ -1,8 +1,9 @@
-dns.setServers(["8.8.8.8", "8.8.4.4"]);
+import dotenv from 'dotenv';
+dotenv.config();
 import dns from "node:dns";
+dns.setServers(["8.8.8.8", "8.8.4.4"]);
 import express from 'express';
 import cors from 'cors';
-import dotenv from 'dotenv';
 import mongoose from 'mongoose';
 import http from 'http';
 import { Server } from 'socket.io';
@@ -14,10 +15,10 @@ import userRoutes from './routes/user.routes.js';
 import messageRoutes from './routes/message.routes.js';
 import uploadRoutes from './routes/upload.routes.js';
 import announcementRoutes from './routes/announcement.routes.js';
+import documentRoutes from './routes/document.routes.js';
+import aiRoutes from './routes/ai.routes.js';
 import path from 'path';
 import { fileURLToPath } from 'url';
-
-dotenv.config();
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -68,6 +69,8 @@ app.use('/api/users', userRoutes);
 app.use('/api/messages', messageRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/announcements', announcementRoutes);
+app.use('/api/documents', documentRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Phục vụ file static
 app.use('/uploads', express.static(path.join(__dirname, '../uploads')));

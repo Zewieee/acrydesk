@@ -20,7 +20,7 @@ export const getAllUsersAPI = async (): Promise<Staff[]> => {
   return response.data;
 };
 
-export const updateMyProfileAPI = async (data: { name: string; phone: string }) => {
+export const updateMyProfileAPI = async (data: { name: string; phone: string; avatar?: string }) => {
   const response = await api.put('/users/me', data);
   return response.data;
 };

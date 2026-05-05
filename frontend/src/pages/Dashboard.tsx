@@ -1,5 +1,7 @@
 // src/pages/Dashboard.tsx
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { io } from 'socket.io-client';
+import toast from 'react-hot-toast';
 import {
   Home,
   FileText,
@@ -13,6 +15,11 @@ import {
   Filter,
   ChevronLeft,
   ChevronRight,
+  ChevronsUpDown,
+  ChevronUp,
+  ChevronDown,
+  Download,
+  Calendar,
   Eye,
   Edit,
   Trash2,
@@ -51,6 +58,8 @@ import RFQModal from '../components/RFQModal';
 import RFQDetail from '../components/RFQDetail';
 import ChangePasswordModal from '../components/ChangePasswordModal';
 import SettingsView from '../components/SettingsView';
+import GlobalSearch from '../components/GlobalSearch';
+import RevenueReport from '../components/RevenueReport';
 import ProductionKanban from '../components/ProductionKanban';
 import MessagesView from '../components/MessagesView';
 import NotificationView from '../components/NotificationView';
@@ -94,6 +103,8 @@ export default function Dashboard({ onLogout }: DashboardProps) {
   const [statusFilter, setStatusFilter] = useState<string>('all');
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 10;
+  const [sortKey, setSortKey] = useState<'code' | 'customerName' | 'status' | 'createdAt' | 'expectedDate'>('createdAt');
+  const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
   const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
   const notificationDropdownRef = useRef<HTMLDivElement | null>(null);
@@ -111,6 +122,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     { id: 'customers', label: 'Khách hàng', icon: Users },
     { id: 'quotations', label: 'Báo giá', icon: FileText },
     { id: 'production', label: 'Tiến độ', icon: Activity },
+    { id: 'reports', label: 'Báo cáo', icon: BarChart3 },
     { id: 'messages', label: 'Tin nhắn', icon: MessageSquare },
     { id: 'announcements', label: 'Thông báo chung', icon: Megaphone },
     { id: 'settings', label: 'Cài đặt', icon: Settings },
@@ -164,9 +176,66 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     return matchesSearch && matchesStatus;
   });
 
-  // Phân trang
-  const totalPages = Math.ceil(filteredRFQs.length / itemsPerPage);
-  const paginatedRFQs = filteredRFQs.slice(
+  // Sort
+  const handleSort = (key: typeof sortKey) => {
+    if (sortKey === key) setSortDir(d => d === 'asc' ? 'desc' : 'asc');
+    else { setSortKey(key); setSortDir('asc'); }
+    setCurrentPage(1);
+  };
+
+  const SortIcon = ({ col }: { col: typeof sortKey }) => {
+    if (sortKey !== col) return <ChevronsUpDown size={14} className="text-slate-400" />;
+    return sortDir === 'asc' ? <ChevronUp size={14} className="text-blue-600" /> : <ChevronDown size={14} className="text-blue-600" />;
+  };
+
+  const sortedRFQs = useMemo(() => [...filteredRFQs].sort((a, b) => {
+    let aVal = '', bVal = '';
+    if (sortKey === 'code')         { aVal = a.code;         bVal = b.code; }
+    else if (sortKey === 'customerName') { aVal = a.customerName; bVal = b.customerName; }
+    else if (sortKey === 'status')  { aVal = a.status;       bVal = b.status; }
+    else if (sortKey === 'createdAt')   { aVal = a.createdAt;    bVal = b.createdAt; }
+    else if (sortKey === 'expectedDate'){ aVal = a.expectedDate ?? ''; bVal = b.expectedDate ?? ''; }
+    const cmp = aVal.localeCompare(bVal);
+    return sortDir === 'asc' ? cmp : -cmp;
+  }), [filteredRFQs, sortKey, sortDir]);
+
+  // Deadline helper
+  const getDeadlineInfo = (date?: string) => {
+    if (!date) return null;
+    const diff = new Date(date).getTime() - Date.now();
+    const days = Math.ceil(diff / 86_400_000);
+    if (days < 0)  return { label: `Trễ ${-days}d`, cls: 'bg-red-100 text-red-700 font-bold' };
+    if (days === 0) return { label: 'Hôm nay!',      cls: 'bg-red-100 text-red-700 font-bold animate-pulse' };
+    if (days <= 3)  return { label: `Còn ${days}d`,  cls: 'bg-amber-100 text-amber-700 font-bold' };
+    return { label: new Date(date).toLocaleDateString('vi-VN'), cls: 'bg-slate-100 text-slate-600' };
+  };
+
+  // Export CSV
+  const exportToCSV = () => {
+    const headers = ['Mã RFQ','Khách hàng','SĐT','Email','Sản phẩm','Tổng SL','Trạng thái','Ngày tạo','Deadline'];
+    const rows = sortedRFQs.map(r => [
+      r.code, r.customerName, r.customerPhone, r.customerEmail,
+      r.items?.map(i => i.productType).join('; ') || '',
+      r.items?.reduce((s, i) => s + i.quantity, 0) || 0,
+      statusConfig[r.status]?.label || r.status,
+      new Date(r.createdAt).toLocaleDateString('vi-VN'),
+      r.expectedDate ? new Date(r.expectedDate).toLocaleDateString('vi-VN') : '',
+    ]);
+    const csv = [headers, ...rows]
+      .map(row => row.map(c => `"${String(c).replace(/"/g, '""')}"`).join(','))
+      .join('\n');
+    const blob = new Blob(['﻿' + csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `RFQ_${new Date().toLocaleDateString('vi-VN').replace(/\//g, '-')}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  // Phân trang (dùng sortedRFQs)
+  const totalPages = Math.ceil(sortedRFQs.length / itemsPerPage);
+  const paginatedRFQs = sortedRFQs.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
@@ -460,6 +529,14 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             Làm mới
           </button>
           <button
+            onClick={exportToCSV}
+            className="flex items-center gap-2 px-5 py-2.5 bg-white border border-slate-200 hover:bg-slate-50 text-slate-700 rounded-xl transition"
+            title="Xuất danh sách ra file CSV (mở được bằng Excel)"
+          >
+            <Download size={18} />
+            Xuất Excel
+          </button>
+          <button
             onClick={() => {
               setSelectedRFQ(null);
               setIsModalOpen(true);
@@ -507,19 +584,33 @@ export default function Dashboard({ onLogout }: DashboardProps) {
           <table className="w-full">
             <thead className="bg-slate-50 border-b border-slate-200">
               <tr>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Mã RFQ</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Khách hàng</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Sản phẩm</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Số lượng</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Trạng thái</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Ngày tạo</th>
-                <th className="px-6 py-4 text-left text-sm font-semibold text-slate-600">Thao tác</th>
+                {([
+                  { key: 'code',         label: 'Mã RFQ' },
+                  { key: 'customerName', label: 'Khách hàng' },
+                  { key: null,           label: 'Sản phẩm' },
+                  { key: null,           label: 'Số lượng' },
+                  { key: 'status',       label: 'Trạng thái' },
+                  { key: 'createdAt',    label: 'Ngày tạo' },
+                  { key: 'expectedDate', label: 'Deadline' },
+                  { key: null,           label: 'Thao tác' },
+                ] as { key: typeof sortKey | null; label: string }[]).map(col => (
+                  <th
+                    key={col.label}
+                    onClick={() => col.key && handleSort(col.key)}
+                    className={`px-6 py-4 text-left text-sm font-semibold text-slate-600 ${col.key ? 'cursor-pointer hover:text-blue-600 select-none' : ''}`}
+                  >
+                    <div className="flex items-center gap-1">
+                      {col.label}
+                      {col.key && <SortIcon col={col.key} />}
+                    </div>
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
               {isLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={8} className="px-6 py-12 text-center text-slate-500">
                     <div className="flex items-center justify-center gap-2">
                       <Loader2 size={20} className="animate-spin" />
                       Đang tải dữ liệu...
@@ -528,7 +619,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 </tr>
               ) : apiError ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-red-600">
+                  <td colSpan={8} className="px-6 py-12 text-center text-red-600">
                     {apiError}
                     <button onClick={fetchRFQs} className="ml-2 text-blue-600 hover:underline">Thử lại</button>
                   </td>
@@ -554,6 +645,17 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
                     <td className="px-6 py-4 text-slate-600 text-sm">
                       {new Date(rfq.createdAt).toLocaleDateString('vi-VN')}
+                    </td>
+                    <td className="px-6 py-4">
+                      {(() => {
+                        const dl = getDeadlineInfo(rfq.expectedDate);
+                        if (!dl) return <span className="text-slate-300 text-xs">—</span>;
+                        return (
+                          <span className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg text-xs ${dl.cls}`}>
+                            <Calendar size={11} />{dl.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-4">
                       <div className="flex gap-2">
@@ -589,7 +691,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={7} className="px-6 py-12 text-center text-slate-500">
+                  <td colSpan={8} className="px-6 py-12 text-center text-slate-500">
                     Chưa có yêu cầu báo giá nào. Nhấn "Tạo yêu cầu mới" để bắt đầu!
                   </td>
                 </tr>
@@ -905,6 +1007,63 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const interval = setInterval(fetchNotifications, 5000);
     return () => clearInterval(interval);
   }, [fetchNotifications]);
+
+  // Socket: nhận popup realtime cho staff
+  useEffect(() => {
+    const userId = user?.id || user?._id;
+    if (!userId) return;
+
+    const socket = io('http://localhost:3000', { withCredentials: true });
+    socket.emit('joinRoom', userId);
+
+    socket.on('new_message_popup', (data: { rfqId: string; rfqCode: string; senderName: string; preview: string }) => {
+      toast(
+        (t) => (
+          <div
+            onClick={() => {
+              setActiveChatRfqId(data.rfqId);
+              setActiveMenu('messages');
+              toast.dismiss(t.id);
+            }}
+            className="cursor-pointer"
+          >
+            <p className="font-semibold text-slate-900">💬 Tin nhắn mới — {data.rfqCode}</p>
+            <p className="text-sm text-slate-600 mt-0.5">{data.senderName}: "{data.preview}"</p>
+            <p className="text-xs text-blue-600 mt-1 font-medium">Nhấn để mở chat →</p>
+          </div>
+        ),
+        { duration: 6000, style: { maxWidth: 380 } }
+      );
+      fetchNotifications();
+    });
+
+    socket.on('new_rfq_popup', (data: { rfqId: string; rfqCode: string; customerName: string }) => {
+      toast(
+        (t) => (
+          <div
+            onClick={() => {
+              setActiveMenu('requests');
+              fetchRFQs();
+              toast.dismiss(t.id);
+            }}
+            className="cursor-pointer"
+          >
+            <p className="font-semibold text-slate-900">📋 Yêu cầu báo giá mới!</p>
+            <p className="text-sm text-slate-600 mt-0.5">{data.customerName} — {data.rfqCode}</p>
+            <p className="text-xs text-blue-600 mt-1 font-medium">Nhấn để xem →</p>
+          </div>
+        ),
+        { duration: 7000, icon: '🆕', style: { maxWidth: 380 } }
+      );
+      fetchNotifications();
+      fetchRFQs();
+    });
+
+    return () => {
+      socket.emit('leaveRoom', userId);
+      socket.disconnect();
+    };
+  }, [user?.id, user?._id]);
 
   const handleNotificationClick = (n: Notification) => {
     setIsNotificationsOpen(false);
@@ -1420,9 +1579,13 @@ export default function Dashboard({ onLogout }: DashboardProps) {
 
         {/* Thông tin người dùng */}
         <div className="p-4 border-t border-slate-200">
-          <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-2xl">
-            <div className="w-10 h-10 bg-slate-100 rounded-full flex items-center justify-center">
-              <User size={20} />
+          <div className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-2xl shadow-sm border border-slate-100">
+            <div className="w-10 h-10 bg-slate-200 rounded-xl flex items-center justify-center overflow-hidden border border-white shadow-inner">
+              {user?.avatar ? (
+                <img src={getFileUrl(user.avatar)} alt={userName} className="w-full h-full object-cover" />
+              ) : (
+                <User size={20} className="text-slate-500" />
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <p className="font-medium text-slate-900 truncate">{userName}</p>
@@ -1450,10 +1613,26 @@ export default function Dashboard({ onLogout }: DashboardProps) {
             >
               <Menu size={20} />
             </button>
-            <h2 className="text-xl font-semibold text-slate-900 capitalize">
+            <h2 className="text-xl font-semibold text-slate-900 capitalize hidden md:block">
               {menuItems.find(m => m.id === activeMenu)?.label || 'Dashboard'}
             </h2>
           </div>
+
+          <GlobalSearch
+            rfqs={rfqs}
+            quotations={staffQuotations}
+            onNavigate={({ menu, rfq, customerKey }) => {
+              setActiveMenu(menu);
+              setStatusFilter('all');
+              setSearchTerm('');
+              if (rfq) {
+                setTimeout(() => setSelectedRFQ(rfq), 50);
+              }
+              if (customerKey) {
+                setTimeout(() => setCustomerSearch(customerKey), 50);
+              }
+            }}
+          />
 
           <div className="flex items-center gap-6">
             {/* Thông báo */}
@@ -1548,8 +1727,12 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                   <p className="text-sm font-medium text-slate-900">{userName}</p>
                   <p className="text-xs text-slate-500">{userEmail}</p>
                 </div>
-                <div className="w-9 h-9 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-semibold">
-                  {userInitials}
+                <div className="w-9 h-9 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-semibold overflow-hidden border border-white/20 shadow-sm">
+                  {user?.avatar ? (
+                    <img src={getFileUrl(user.avatar)} alt={userName} className="w-full h-full object-cover" />
+                  ) : (
+                    userInitials
+                  )}
                 </div>
               </button>
 
@@ -1619,6 +1802,9 @@ export default function Dashboard({ onLogout }: DashboardProps) {
                 }}
               />
             </div>
+          )}
+          {activeMenu === 'reports' && (
+            <RevenueReport rfqs={rfqs} quotations={staffQuotations} />
           )}
           {activeMenu === 'messages' && (
             <MessagesView rfqs={rfqs} defaultSelectedId={activeChatRfqId} />

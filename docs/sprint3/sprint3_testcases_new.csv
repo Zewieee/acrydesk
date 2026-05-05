@@ -1,0 +1,133 @@
+﻿"Test Case ID","Sprint","Purpose","Precondition","Precondition Details","Steps","Test Data","Expected Results","Actual Result","Status","Comment"
+"","","REALTIME NOTIFICATIONS","","","","","","","",""
+"TC_128","3","Verify production stage popup appears for customer when stage is updated","Logged In (Customer)","Customer has an active RFQ","1. Staff logs in to Dashboard.
+2. Go to Production tab.
+3. Move RFQ card to next stage by clicking the forward button.
+4. Observe Customer Dashboard.","Active RFQ with a production stage","Customer receives toast popup within 2 seconds showing the new stage name without page refresh.","","Not Executed",""
+"TC_129","3","Verify clicking production stage popup navigates to Production tab","Logged In (Customer)","Customer Dashboard is open on any tab","1. Wait for production stage popup to appear.
+2. Click on the popup.","N/A","Popup dismisses and CustomerDashboard switches to the Production Progress tab.","","Not Executed",""
+"TC_130","3","Verify all online staff receive popup when customer sends a message","Logged In (Staff - multiple accounts)","At least one staff member is online on Dashboard","1. Customer logs in.
+2. Open Messages tab.
+3. Select an RFQ conversation.
+4. Type and send a message.","Message: I have a question about dimensions","All logged-in staff members receive a toast popup with sender name and 80-char message preview within 2 seconds.","","Not Executed",""
+"TC_131","3","Verify clicking message popup opens correct chat conversation","Logged In (Staff)","Staff Dashboard is open on Overview tab","1. Customer sends a message for RFQ-2025-003.
+2. Wait for popup on Staff Dashboard.
+3. Click the popup.","RFQ: RFQ-2025-003","Messages tab opens and the conversation for RFQ-2025-003 is automatically selected.","","Not Executed",""
+"TC_132","3","Verify customer receives popup when staff sends a message","Logged In (Customer)","Customer Dashboard is open","1. Staff sends a message in an RFQ conversation.
+2. Observe Customer Dashboard.","N/A","Customer receives toast popup showing staff name and message preview.","","Not Executed",""
+"TC_133","3","Verify all staff receive popup when customer creates new RFQ","Logged In (Staff)","Staff Dashboard is open","1. Customer logs in.
+2. Click Create New Request.
+3. Fill in form and submit.","Customer name: Test Company; Product: PE Tank","All online staff receive a popup showing the new customer name and RFQ code.","","Not Executed",""
+"TC_134","3","Verify clicking new RFQ popup navigates to Requests tab","Logged In (Staff)","Staff Dashboard is open on Dashboard Overview","1. Wait for new RFQ popup to appear.
+2. Click the popup.","N/A","Popup dismisses, activeMenu switches to Requests tab, and the RFQ list refreshes.","","Not Executed",""
+"TC_135","3","Verify message sender does NOT receive popup from own message","Logged In (Customer)","Customer Dashboard is open","1. Customer opens Messages tab.
+2. Sends a message.
+3. Observe for any popup on Customer Dashboard.","Message: Hello, I need help","No popup appears on the Customer's own screen after sending the message.","","Not Executed",""
+"TC_136","3","Verify Done stage triggers special completion popup message","Logged In (Customer)","Customer has an RFQ in Delivering stage","1. Staff moves RFQ from Delivering to Done.
+2. Observe Customer Dashboard.","N/A","Customer popup shows the RFQ code completed message with text stating the order has completed the full production process.","","Not Executed",""
+"TC_137","3","Verify notification is saved to DB and visible in bell list","Logged In (Customer)","Customer Dashboard is open","1. Staff triggers a stage change for customer's RFQ.
+2. Customer clicks the bell icon.
+3. Review notification list.","N/A","The production stage notification appears in the dropdown notification list with correct title and message.","","Not Executed",""
+"","","GLOBAL SEARCH","","","","","","","",""
+"TC_138","3","Verify Ctrl+K opens the global search modal","Logged In (Staff)","Staff Dashboard is open on any tab","1. Press Ctrl+K on keyboard.
+2. Observe screen.","Keyboard shortcut: Ctrl+K","Global search modal appears with input focused, placeholder text visible, and no results shown.","","Not Executed",""
+"TC_139","3","Verify search by RFQ code returns matching results","Logged In (Staff)","Global search modal is open","1. Press Ctrl+K.
+2. Type RFQ-2025 in search input.","Search query: RFQ-2025","Results appear grouped under Quotation Requests showing all RFQs whose code contains RFQ-2025 with correct status badges.","","Not Executed",""
+"TC_140","3","Verify search by customer name returns results across multiple groups","Logged In (Staff)","Global search modal is open","1. Press Ctrl+K.
+2. Type a customer name that exists in both RFQs and Customer list.","Search query: Nguyen","Results appear in both the Quotation Requests group and the Customers group.","","Not Executed",""
+"TC_141","3","Verify keyboard navigation with arrow keys and Enter","Logged In (Staff)","Search modal open with results visible","1. Type a search query.
+2. Press the down arrow key twice.
+3. Press Enter.","Any valid query with results","Active highlight moves to 3rd result on double down-arrow; pressing Enter closes modal and navigates to that result.","","Not Executed",""
+"TC_142","3","Verify clicking RFQ result navigates to correct tab and opens detail","Logged In (Staff)","Search modal open with RFQ results","1. Type an RFQ code.
+2. Click on an RFQ result.","Existing RFQ code","Modal closes, Dashboard switches to Quotation Requests tab, and RFQ detail modal opens for the selected RFQ.","","Not Executed",""
+"TC_143","3","Verify clicking Customer result pre-fills customer search field","Logged In (Staff)","Search modal open with Customer results","1. Type customer name or email.
+2. Click on a Customer result.","Existing customer name or email","Modal closes, Dashboard switches to Customers tab, and the search box is pre-filled with the customer identifier.","","Not Executed",""
+"TC_144","3","Verify empty query shows placeholder state","Logged In (Staff)","Global search modal is open","1. Press Ctrl+K to open modal.
+2. Do not type anything.","N/A","Modal shows placeholder icon and instructional text with no result items displayed.","","Not Executed",""
+"TC_145","3","Verify Esc key closes the search modal","Logged In (Staff)","Global search modal is open","1. Press Ctrl+K.
+2. Optionally type something.
+3. Press Esc key.","N/A","Modal closes immediately; user remains on the same tab they were on before opening search.","","Not Executed",""
+"","","REVENUE REPORT","","","","","","","",""
+"TC_146","3","Verify Revenue Report page loads correctly","Logged In (Manager)","Manager is on Staff Dashboard","1. Click Bao cao (Reports) menu item in sidebar.","Role: Manager","Revenue Report page loads with 4 KPI cards, 2 charts, and 2 ranking tables visible. Time filter buttons visible at top.","","Not Executed",""
+"TC_147","3","Verify Total Revenue KPI only counts approved quotations","Logged In (Manager)","At least 1 approved and 1 sent quotation exist","1. Open Revenue Report page.
+2. Note Total Revenue KPI value.
+3. Verify against sum of approved quotations only.","Filter: Year (default)","Total Revenue matches the sum of totalAmount for all quotations with status approved only. Sent and draft quotations are excluded.","","Not Executed",""
+"TC_148","3","Verify time filter updates all charts and KPIs simultaneously","Logged In (Manager)","Revenue Report page is open","1. Note current values with Year filter.
+2. Click 3 months filter button.
+3. Observe all components.","Filters: Year then 3 months","All 4 KPI cards, both charts, and both ranking tables update simultaneously to reflect only the last 3 months of data.","","Not Executed",""
+"TC_149","3","Verify growth badge shows correct percentage change vs previous month","Logged In (Manager)","Revenue exists in both current and previous month","1. Open Revenue Report.
+2. Observe the growth badge under Total Revenue KPI.","Current month revenue greater than previous month","Growth badge shows green color with correct positive percentage. If current is less than previous, shows red with negative percentage.","","Not Executed",""
+"TC_150","3","Verify AreaChart tooltip shows correct revenue values on hover","Logged In (Manager)","Revenue Report page open with data","1. Hover mouse over a data point on the monthly revenue AreaChart.","N/A","Tooltip appears showing the Da chot and Pipeline values for that month in Vietnamese currency format.","","Not Executed",""
+"TC_151","3","Verify Top Customers table is ranked by revenue descending","Logged In (Manager)","At least 3 customers with approved quotations exist","1. Open Revenue Report.
+2. Review Top Customers table order.","N/A","Customers listed in descending order by total approved revenue. Customer number 1 progress bar equals 100%; others are proportional.","","Not Executed",""
+"TC_152","3","Verify empty state shows placeholder when no data in selected time range","Logged In (Manager)","No approved quotations in the last 3 months","1. Open Revenue Report.
+2. Click 3 months filter.","Filter: 3 months with no data","Charts show placeholder text indicating no data is available for this period instead of broken charts. No JavaScript errors.","","Not Executed",""
+"TC_153","3","Verify Reports tab is not visible for Engineer role","Logged In (Engineer)","Engineer account is logged in","1. Log in as Engineer role.
+2. Check the sidebar menu items.","Role: Engineer","The Bao cao (Reports) menu item does NOT appear in the sidebar for the Engineer role.","","Not Executed",""
+"","","RFQ TABLE ENHANCEMENTS (DEADLINE, SORT, EXPORT)","","","","","","","",""
+"TC_154","3","Verify Deadline column displays for RFQ with expectedDate set","Logged In (Staff)","At least one RFQ with expectedDate exists","1. Go to Quotation Requests tab.
+2. Find an RFQ with expectedDate set.
+3. Observe the Deadline column.","RFQ with future expectedDate","Deadline column shows a badge with the date in DD/MM/YYYY format with gray color and calendar icon.","","Not Executed",""
+"TC_155","3","Verify Deadline badge shows red for overdue RFQs","Logged In (Staff)","RFQ exists with expectedDate in the past","1. Go to Quotation Requests tab.
+2. Find RFQ with past expectedDate.
+3. Check Deadline badge.","RFQ expectedDate: yesterday","Deadline badge shows red background with text indicating the number of overdue days (e.g. Tre 1d).","","Not Executed",""
+"TC_156","3","Verify Deadline badge shows amber for RFQs due within 3 days","Logged In (Staff)","RFQ exists with expectedDate within next 1 to 3 days","1. Go to Quotation Requests tab.
+2. Find RFQ due in 2 days.
+3. Check Deadline badge.","RFQ expectedDate: 2 days from today","Deadline badge shows amber/yellow background with text indicating remaining days (e.g. Con 2d).","","Not Executed",""
+"TC_157","3","Verify Deadline column shows dash for RFQ without expectedDate","Logged In (Staff)","RFQ exists with no expectedDate","1. Go to Quotation Requests tab.
+2. Find an RFQ with no deadline set.
+3. Observe Deadline column.","RFQ: no expectedDate","Deadline column shows a dash in light gray for that row.","","Not Executed",""
+"TC_158","3","Verify clicking column header sorts table ascending","Logged In (Staff)","Quotation Requests tab open with multiple RFQs","1. Click Customer column header.
+2. Observe sort order.","N/A","Table rows re-sort alphabetically A to Z by customer name. An up arrow icon appears next to the Customer header.","","Not Executed",""
+"TC_159","3","Verify clicking same sorted column header reverses to descending","Logged In (Staff)","Table already sorted ascending by a column","1. Click the same column header again.
+2. Observe sort direction.","N/A","Table re-sorts in reverse order Z to A. Icon changes from up arrow to down arrow.","","Not Executed",""
+"TC_160","3","Verify sort resets pagination to page 1","Logged In (Staff)","User is on page 2 or later in RFQ table","1. Navigate to page 2 of the RFQ list.
+2. Click any sortable column header.","Table has more than 10 RFQs","Pagination resets to Page 1 after sort is applied.","","Not Executed",""
+"TC_161","3","Verify Export Excel button downloads a CSV file","Logged In (Staff)","Quotation Requests tab is open","1. Click the Xuat Excel button.
+2. Observe browser download.","N/A","Browser downloads a file named RFQ_[today's date].csv (e.g. RFQ_05-05-2026.csv).","","Not Executed",""
+"TC_162","3","Verify exported CSV contains correct columns and data","Logged In (Staff)","CSV file has been downloaded","1. Open downloaded CSV in Excel or text editor.
+2. Check column headers and data.","N/A","CSV contains exactly 9 columns: Ma RFQ, Khach hang, SDT, Email, San pham, Tong SL, Trang thai, Ngay tao, Deadline. Data matches filtered table.","","Not Executed",""
+"TC_163","3","Verify CSV displays Vietnamese characters correctly in Excel","Logged In (Staff)","CSV file has been downloaded","1. Open downloaded CSV with Microsoft Excel.
+2. Check Vietnamese text display.","N/A","Vietnamese characters display correctly without garbled characters or question mark symbols.","","Not Executed",""
+"","","UPLOAD AVATAR","","","","","","","",""
+"TC_164","3","Verify avatar upload area is visible in Profile Settings","Logged In (Staff)","User is logged in","1. Click on user avatar or name in header.
+2. Select Ho so ca nhan.
+3. Observe Profile tab.","Role: any authenticated user","Circular avatar area (96x96px) is visible at the top of the profile form showing current image or initials placeholder.","","Not Executed",""
+"TC_165","3","Verify clicking avatar area opens file picker","Logged In (Staff)","User is on Profile Settings page","1. Hover over the avatar circle.
+2. Observe hover state.
+3. Click on the avatar circle.","N/A","Hover shows camera icon overlay with Change text. Clicking opens OS file picker dialog for image files only.","","Not Executed",""
+"TC_166","3","Verify valid image file uploads successfully","Logged In (Staff)","File picker is open","1. Click avatar circle.
+2. Select a valid JPG file under 5MB.
+3. Confirm the upload.","File: photo.jpg, size: 2MB","Upload succeeds. Success toast appears. New image displays in avatar circle immediately.","","Not Executed",""
+"TC_167","3","Verify avatar updates on header and sidebar without page reload","Logged In (Staff)","User successfully uploaded a new avatar","1. Upload a new avatar image.
+2. Observe the header top-right avatar and sidebar bottom user info.","N/A","Both header and sidebar avatars update to the new image immediately without requiring a page reload.","","Not Executed",""
+"TC_168","3","Verify file larger than 5MB shows error message","Logged In (Staff)","User is on Profile Settings page","1. Click avatar circle.
+2. Select an image file larger than 5MB.","File: large_photo.jpg, size: 8MB","Error message appears stating file size must not exceed 5MB. No upload is performed.","","Not Executed",""
+"TC_169","3","Verify non-image file type shows error message","Logged In (Staff)","User is on Profile Settings page","1. Click avatar circle.
+2. Attempt to select a PDF or TXT file.","File: document.pdf","Error message appears stating only JPG PNG WEBP images are supported. Upload is blocked.","","Not Executed",""
+"TC_170","3","Verify Delete Avatar resets to default initials placeholder","Logged In (Staff)","User currently has an uploaded avatar image","1. Go to Profile Settings.
+2. Click Xoa anh (Delete Avatar) button.","User has avatarUrl set","Avatar reverts to default colored circle with user name initials. avatarUrl is cleared from the user record.","","Not Executed",""
+"TC_171","3","Verify uploaded avatar persists after logout and re-login","Logged In (Staff)","User has successfully uploaded an avatar","1. Upload avatar.
+2. Log out.
+3. Log back in with same credentials.
+4. Observe avatar.","N/A","The uploaded avatar image still displays correctly after re-login, confirming it was saved to the database.","","Not Executed",""
+"","","AI CHATBOT","","","","","","","",""
+"TC_172","3","Verify AI Chatbot widget is visible on homepage","Browser is opened","User accesses homepage without login","1. Open browser.
+2. Navigate to homepage URL.
+3. Look for chat widget at bottom-right.","URL: http://localhost:5173/","A circular chat button with blue background is visible fixed at the bottom-right corner of the homepage.","","Not Executed",""
+"TC_173","3","Verify chat widget opens with welcome message and quick option chips","Browser is opened","Homepage is loaded","1. Click the chat button at bottom-right.","N/A","Chat window opens with a greeting message and 3 clickable option chips: Tim hieu san pham, Yeu cau bao gia, Lien he tu van.","","Not Executed",""
+"TC_174","3","Verify clicking a quick option chip sends message and receives AI response","Browser is opened","Chat widget is open with quick options visible","1. Open chat widget.
+2. Click Tim hieu san pham chip.
+3. Wait for response.","Quick option: Tim hieu san pham","Chip text is sent as a user message. Typing indicator appears. AI responds within 10 seconds with relevant OPEP product information.","","Not Executed",""
+"TC_175","3","Verify typing a custom question receives a relevant AI response","Browser is opened","Chat widget is open","1. Open chat widget.
+2. Type: What plastic tanks do you offer?
+3. Press Enter or click Send.","Message: What plastic tanks do you offer?","User message appears as a blue bubble. AI responds with information about OPEP's tank products including PE, PP, PVC, FRP types.","","Not Executed",""
+"TC_176","3","Verify typing indicator shows while waiting for AI response","Browser is opened","Chat widget is open","1. Send any message.
+2. Immediately observe chat window.","Message: any valid text","Input field is disabled, send button shows loading spinner, and animated typing indicator with 3 dots appears in chat.","","Not Executed",""
+"TC_177","3","Verify message over 500 characters disables the send button","Browser is opened","Chat widget is open","1. Open chat widget.
+2. Paste or type a message longer than 500 characters.","Message: 501+ character text","Character counter turns red showing over-limit count. Send button becomes disabled. Message cannot be submitted.","","Not Executed",""
+"TC_178","3","Verify chat history persists when widget is closed and reopened","Browser is opened","User has sent at least 2 messages in chat","1. Exchange 2 or more messages with chatbot.
+2. Click X to close widget.
+3. Click chat button to reopen.","N/A","All previous messages from both user and bot are still visible in the chat window after reopening.","","Not Executed",""
+"TC_179","3","Verify fallback message displays when AI API returns an error","Browser is opened","Chat widget open; API endpoint unavailable","1. Simulate API failure by stopping backend.
+2. Send a message in chat.","N/A","Bot responds with fallback message including the hotline number 0913 213 091. Chat does not crash or show a blank screen.","","Not Executed",""
