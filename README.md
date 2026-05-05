@@ -141,7 +141,7 @@ acrydesk/
 
 | Role | Email | Password |
 |---|---|---|
-| Manager | manager@acrydesk.com | 123456 |
+| Manager | manager3@acrydesk.com | 123456 |
 | Sales | sales@acrydesk.com | 123456 |
 | Engineer | engineer@acrydesk.com | 123456 |
 | Customer | Đăng ký tài khoản mới | — |
