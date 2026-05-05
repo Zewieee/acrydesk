@@ -51,7 +51,7 @@ export default function MessagesView({ rfqs, defaultSelectedId, onMessageSent }:
 
   useEffect(() => {
     // 1. Initialize socket connection
-    const newSocket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000', {
+    const newSocket = io('http://localhost:3000', {
        withCredentials: true
     });
     setSocket(newSocket);

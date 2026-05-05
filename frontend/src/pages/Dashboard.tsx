@@ -1013,7 +1013,7 @@ export default function Dashboard({ onLogout }: DashboardProps) {
     const userId = user?.id || user?._id;
     if (!userId) return;
 
-    const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000', { withCredentials: true });
+    const socket = io('http://localhost:3000', { withCredentials: true });
     socket.emit('joinRoom', userId);
 
     socket.on('new_message_popup', (data: { rfqId: string; rfqCode: string; senderName: string; preview: string }) => {

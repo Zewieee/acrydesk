@@ -179,7 +179,7 @@ export default function CustomerDashboard({ onLogout }: CustomerDashboardProps) 
     const userId = user?.id || user?._id;
     if (!userId) return;
 
-    const socket = io(import.meta.env.VITE_SOCKET_URL || 'http://localhost:3000', { withCredentials: true });
+    const socket = io('http://localhost:3000', { withCredentials: true });
     socket.emit('joinRoom', userId);
 
     socket.on('production_stage_updated', (data: { rfqCode: string; stageLabel: string; title: string; message: string }) => {
