@@ -168,10 +168,3 @@ acrydesk/
 
 ---
 
-## Liên hệ
-
-**Công Ty TNHH OPEP Việt Nam**
-- Địa chỉ: Số 70, Nghách 109, Ngõ 156 Đường Tam Trinh, P. Hoàng Mai, Hà Nội
-- Hotline: 0913 213 091 | (024) 2219 6916
-- Email: opepvn1@gmail.com
-- Website: [opep.com.vn](https://opep.com.vn)
